@@ -2,6 +2,9 @@
 
 A rich editor for markdown files that live in GitHub. Inline comments on text ranges, change suggestions — no server, no database, just GitHub.
 
+<img width="2360" height="1432" alt="Screenshot 2026-02-17 at 12 50 57" src="https://github.com/user-attachments/assets/e4aa35c1-61ac-4e42-b360-76a75f0621f4" />
+
+
 Built for teams that already collaborate in a repo. Everyone who can push a branch can edit and comment.
 
 ## The problem
