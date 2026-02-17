@@ -7,7 +7,8 @@ import { EditorView, keymap, lineNumbers, highlightActiveLine, drawSelection } f
 import { EditorState, Compartment } from "@codemirror/state";
 import { markdown } from "@codemirror/lang-markdown";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
-import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from "@codemirror/language";
+import { syntaxHighlighting, bracketMatching } from "@codemirror/language";
+import { classHighlighter } from "@lezer/highlight";
 import { vim } from "@replit/codemirror-vim";
 
 export interface SourceEditor {
@@ -44,7 +45,7 @@ export function createSourceEditor(
         history(),
         keymap.of([...defaultKeymap, ...historyKeymap]),
         markdown(),
-        syntaxHighlighting(defaultHighlightStyle),
+        syntaxHighlighting(classHighlighter),
         EditorView.lineWrapping,
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
