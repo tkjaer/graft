@@ -712,7 +712,7 @@ mark.comment-mark.suggestion {
 .source-pane {
   flex: 1;
   border: none;
-  border-left: 1px solid var(--border);
+  border-left: none;
   padding: 32px 24px;
   font-family: "SF Mono", "Fira Code", monospace;
   font-size: 13px;
@@ -725,6 +725,21 @@ mark.comment-mark.suggestion {
   tab-size: 2;
   white-space: pre-wrap;
   word-wrap: break-word;
+}
+
+.source-gutter {
+  width: 48px;
+  padding: 32px 8px 32px 0;
+  text-align: right;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border);
+  overflow: hidden;
+  flex-shrink: 0;
+  user-select: none;
 }
 
 .toolbar-toggle-source {
@@ -748,9 +763,13 @@ mark.comment-mark.suggestion {
   max-width: 50%;
 }
 
+#main:has(.source-gutter:not(.hidden)) .source-gutter,
+#main:has(.source-pane:not(.hidden)) .source-pane {
+  /* gutter + pane together take up the other 50% */
+}
+
 #main:has(.source-pane:not(.hidden)) .source-pane {
   flex: 1;
-  max-width: 50%;
 }
 
 /* ── Utilities ──────────────────────────────────────────────────────── */

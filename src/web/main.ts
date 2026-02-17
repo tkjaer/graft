@@ -387,6 +387,7 @@ function showEditorUI(markdown: string, fileName: string) {
     </div>
     <div id="main">
       <div id="editor-container"></div>
+      <div id="source-gutter" class="source-gutter hidden"></div>
       <textarea id="source-pane" class="source-pane hidden" spellcheck="false"></textarea>
       <div id="sidebar">${sidebarHtml()}</div>
     </div>
@@ -455,9 +456,22 @@ function showEditorUI(markdown: string, fileName: string) {
     const sourcePaneEl = document.getElementById("source-pane") as HTMLTextAreaElement | null;
     if (!sourcePaneEl || sourcePaneEl.classList.contains("hidden")) return;
     syncingFromEditor = true;
-    sourcePaneEl.value = (editor.storage as any).markdown.getMarkdown();
+    sourcePaneEl.value = stripCommentMarks((editor.storage as any).markdown.getMarkdown());
     syncingFromEditor = false;
+    updateLineNumbers();
   });
+}
+
+function stripCommentMarks(md: string): string {
+  return md.replace(/<mark[^>]*data-comment-id[^>]*>/g, "").replace(/<\/mark>/g, "");
+}
+
+function updateLineNumbers() {
+  const gutter = document.getElementById("source-gutter");
+  const sp = document.getElementById("source-pane") as HTMLTextAreaElement | null;
+  if (!gutter || !sp) return;
+  const lines = sp.value.split("\n").length;
+  gutter.innerHTML = Array.from({ length: lines }, (_, i) => `<div>${i + 1}</div>`).join("");
 }
 
 // ── Source Pane ───────────────────────────────────────────────────────
@@ -466,20 +480,32 @@ let sourceDebounce: ReturnType<typeof setTimeout> | null = null;
 
 function toggleSource() {
   const sourcePaneEl = document.getElementById("source-pane") as HTMLTextAreaElement;
+  const gutter = document.getElementById("source-gutter")!;
   const btn = document.querySelector('[data-action="toggle-source"]') as HTMLElement;
   sourceVisible = !sourceVisible;
 
   if (sourceVisible) {
-    sourcePaneEl.value = (editor.storage as any).markdown.getMarkdown();
+    sourcePaneEl.value = stripCommentMarks((editor.storage as any).markdown.getMarkdown());
     sourcePaneEl.classList.remove("hidden");
+    gutter.classList.remove("hidden");
     btn.classList.add("active");
+    updateLineNumbers();
 
     sourcePaneEl.addEventListener("input", onSourceInput);
+    sourcePaneEl.addEventListener("scroll", syncGutterScroll);
   } else {
     sourcePaneEl.classList.add("hidden");
+    gutter.classList.add("hidden");
     btn.classList.remove("active");
     sourcePaneEl.removeEventListener("input", onSourceInput);
+    sourcePaneEl.removeEventListener("scroll", syncGutterScroll);
   }
+}
+
+function syncGutterScroll() {
+  const sp = document.getElementById("source-pane") as HTMLTextAreaElement;
+  const gutter = document.getElementById("source-gutter");
+  if (gutter) gutter.scrollTop = sp.scrollTop;
 }
 
 function onSourceInput() {
@@ -491,6 +517,7 @@ function onSourceInput() {
     editor.commands.setContent(sourcePaneEl.value);
     ctrl.applyCommentMarks();
     syncingFromSource = false;
+    updateLineNumbers();
   }, 300);
 }
 

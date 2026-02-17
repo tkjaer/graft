@@ -61,6 +61,7 @@ document.getElementById("app")!.innerHTML = `
   </div>
   <div id="main">
     <div id="editor-container"></div>
+    <div id="source-gutter" class="source-gutter hidden"></div>
     <textarea id="source-pane" class="source-pane hidden" spellcheck="false"></textarea>
     <div id="sidebar">
       ${sidebarHtml()}
@@ -107,24 +108,49 @@ editor.on("update", () => {
   const sp = document.getElementById("source-pane") as HTMLTextAreaElement | null;
   if (!sp || sp.classList.contains("hidden")) return;
   syncingFromEditor = true;
-  sp.value = (editor.storage as any).markdown.getMarkdown();
+  sp.value = stripCommentMarks((editor.storage as any).markdown.getMarkdown());
   syncingFromEditor = false;
+  updateLineNumbers();
 });
+
+function stripCommentMarks(md: string): string {
+  return md.replace(/<mark[^>]*data-comment-id[^>]*>/g, "").replace(/<\/mark>/g, "");
+}
+
+function updateLineNumbers() {
+  const gutter = document.getElementById("source-gutter");
+  const sp = document.getElementById("source-pane") as HTMLTextAreaElement | null;
+  if (!gutter || !sp) return;
+  const lines = sp.value.split("\n").length;
+  gutter.innerHTML = Array.from({ length: lines }, (_, i) => `<div>${i + 1}</div>`).join("");
+}
 
 function toggleSource() {
   const sp = document.getElementById("source-pane") as HTMLTextAreaElement;
+  const gutter = document.getElementById("source-gutter")!;
   const btn = document.querySelector('[data-action="toggle-source"]') as HTMLElement;
   sourceVisible = !sourceVisible;
   if (sourceVisible) {
-    sp.value = (editor.storage as any).markdown.getMarkdown();
+    sp.value = stripCommentMarks((editor.storage as any).markdown.getMarkdown());
     sp.classList.remove("hidden");
+    gutter.classList.remove("hidden");
     btn.classList.add("active");
+    updateLineNumbers();
     sp.addEventListener("input", onSourceInput);
+    sp.addEventListener("scroll", syncGutterScroll);
   } else {
     sp.classList.add("hidden");
+    gutter.classList.add("hidden");
     btn.classList.remove("active");
     sp.removeEventListener("input", onSourceInput);
+    sp.removeEventListener("scroll", syncGutterScroll);
   }
+}
+
+function syncGutterScroll() {
+  const sp = document.getElementById("source-pane") as HTMLTextAreaElement;
+  const gutter = document.getElementById("source-gutter");
+  if (gutter) gutter.scrollTop = sp.scrollTop;
 }
 
 function onSourceInput() {
@@ -136,6 +162,7 @@ function onSourceInput() {
     editor.commands.setContent(sp.value);
     ctrl.applyCommentMarks();
     syncingFromSource = false;
+    updateLineNumbers();
   }, 300);
 }
 
