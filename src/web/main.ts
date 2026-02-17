@@ -401,10 +401,10 @@ function showEditorUI(markdown: string, fileName: string) {
       <div class="toolbar-group">
         <button class="back-btn" data-action="back" title="Back to file picker">←</button>
         <span class="toolbar-filename">${esc(fileName)}</span>
+        <span class="toolbar-user">${esc(currentUser)}</span>
       </div>
       ${editControls}
       <div class="toolbar-group toolbar-right">
-        <span class="toolbar-user">${esc(currentUser)}</span>
         ${saveControls}
       </div>
     </div>
