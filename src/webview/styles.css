@@ -457,35 +457,55 @@ mark.comment-mark.suggestion {
 
 .source-pane {
   flex: 1;
-  border: none;
-  border-left: none;
-  padding: 32px 24px;
-  font-family: var(--vscode-editor-font-family, "SF Mono", "Fira Code", monospace);
-  font-size: var(--vscode-editor-font-size, 13px);
-  line-height: 1.6;
-  background: var(--vscode-editor-background);
-  color: var(--vscode-editor-foreground);
-  resize: none;
-  outline: none;
-  overflow-y: auto;
-  tab-size: 2;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-.source-gutter {
-  width: 48px;
-  padding: 32px 8px 32px 0;
-  text-align: right;
-  font-family: var(--vscode-editor-font-family, monospace);
-  font-size: var(--vscode-editor-font-size, 13px);
-  line-height: 1.6;
-  color: var(--vscode-editorLineNumber-foreground, #6e7681);
-  background: var(--vscode-editorGutter-background, var(--vscode-editor-background));
   border-left: 1px solid var(--vscode-panel-border);
   overflow: hidden;
-  flex-shrink: 0;
-  user-select: none;
+}
+
+.source-pane .cm-editor {
+  height: 100%;
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+}
+
+.source-pane .cm-gutters {
+  background: var(--vscode-editorGutter-background, var(--vscode-editor-background));
+  color: var(--vscode-editorLineNumber-foreground, #6e7681);
+  border-right: 1px solid var(--vscode-panel-border);
+}
+
+.source-pane .cm-activeLineGutter {
+  background: var(--vscode-editor-lineHighlightBackground, rgba(255, 255, 255, 0.04));
+  color: var(--vscode-editorLineNumber-activeForeground, inherit);
+}
+
+.source-pane .cm-activeLine {
+  background: var(--vscode-editor-lineHighlightBackground, rgba(255, 255, 255, 0.04));
+}
+
+.source-pane .cm-cursor {
+  border-left-color: var(--vscode-editorCursor-foreground, var(--vscode-editor-foreground));
+}
+
+.source-pane .cm-content {
+  font-family: var(--vscode-editor-font-family, "SF Mono", "Fira Code", monospace);
+  font-size: var(--vscode-editor-font-size, 13px);
+}
+
+.source-pane .cm-vim-panel {
+  background: var(--vscode-editorGroupHeader-tabsBackground);
+  color: var(--vscode-editor-foreground);
+  border-top: 1px solid var(--vscode-panel-border);
+  padding: 2px 8px;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: var(--vscode-editor-font-size, 13px);
+}
+
+.source-pane .cm-vim-panel input {
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border, transparent);
+  font-family: inherit;
+  font-size: inherit;
 }
 
 .toolbar-toggle-source {

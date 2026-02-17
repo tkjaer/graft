@@ -13,6 +13,7 @@ import {
   handleFormatAction,
   sidebarHtml,
 } from "../shared/editor";
+import { createSourceEditor, type SourceEditor } from "../shared/source-editor";
 
 import "./styles.css";
 
@@ -61,8 +62,7 @@ document.getElementById("app")!.innerHTML = `
   </div>
   <div id="main">
     <div id="editor-container"></div>
-    <div id="source-gutter" class="source-gutter hidden"></div>
-    <textarea id="source-pane" class="source-pane hidden" spellcheck="false"></textarea>
+    <div id="source-pane" class="source-pane hidden"></div>
     <div id="sidebar">
       ${sidebarHtml()}
     </div>
@@ -101,69 +101,47 @@ ctrl.bindFormHandlers();
 let sourceVisible = false;
 let syncingFromSource = false;
 let syncingFromEditor = false;
-let sourceDebounce: ReturnType<typeof setTimeout> | null = null;
+let sourceEditor: SourceEditor | null = null;
 
 editor.on("update", () => {
   if (syncingFromSource) return;
-  const sp = document.getElementById("source-pane") as HTMLTextAreaElement | null;
-  if (!sp || sp.classList.contains("hidden")) return;
+  if (!sourceEditor || !sourceVisible) return;
   syncingFromEditor = true;
-  sp.value = stripCommentMarks((editor.storage as any).markdown.getMarkdown());
+  sourceEditor.setContent(stripCommentMarks((editor.storage as any).markdown.getMarkdown()));
   syncingFromEditor = false;
-  updateLineNumbers();
 });
 
 function stripCommentMarks(md: string): string {
   return md.replace(/<mark[^>]*data-comment-id[^>]*>/g, "").replace(/<\/mark>/g, "");
 }
 
-function updateLineNumbers() {
-  const gutter = document.getElementById("source-gutter");
-  const sp = document.getElementById("source-pane") as HTMLTextAreaElement | null;
-  if (!gutter || !sp) return;
-  const lines = sp.value.split("\n").length;
-  gutter.innerHTML = Array.from({ length: lines }, (_, i) => `<div>${i + 1}</div>`).join("");
-}
-
 function toggleSource() {
-  const sp = document.getElementById("source-pane") as HTMLTextAreaElement;
-  const gutter = document.getElementById("source-gutter")!;
+  const pane = document.getElementById("source-pane")!;
   const btn = document.querySelector('[data-action="toggle-source"]') as HTMLElement;
   sourceVisible = !sourceVisible;
+
   if (sourceVisible) {
-    sp.value = stripCommentMarks((editor.storage as any).markdown.getMarkdown());
-    sp.classList.remove("hidden");
-    gutter.classList.remove("hidden");
+    const md = stripCommentMarks((editor.storage as any).markdown.getMarkdown());
+    pane.classList.remove("hidden");
     btn.classList.add("active");
-    updateLineNumbers();
-    sp.addEventListener("input", onSourceInput);
-    sp.addEventListener("scroll", syncGutterScroll);
+    let debounce: ReturnType<typeof setTimeout> | null = null;
+    sourceEditor = createSourceEditor(pane, md, (content) => {
+      if (syncingFromEditor) return;
+      if (debounce) clearTimeout(debounce);
+      debounce = setTimeout(() => {
+        syncingFromSource = true;
+        editor.commands.setContent(content);
+        ctrl.applyCommentMarks();
+        syncingFromSource = false;
+      }, 300);
+    });
   } else {
-    sp.classList.add("hidden");
-    gutter.classList.add("hidden");
+    sourceEditor?.destroy();
+    sourceEditor = null;
+    pane.innerHTML = "";
+    pane.classList.add("hidden");
     btn.classList.remove("active");
-    sp.removeEventListener("input", onSourceInput);
-    sp.removeEventListener("scroll", syncGutterScroll);
   }
-}
-
-function syncGutterScroll() {
-  const sp = document.getElementById("source-pane") as HTMLTextAreaElement;
-  const gutter = document.getElementById("source-gutter");
-  if (gutter) gutter.scrollTop = sp.scrollTop;
-}
-
-function onSourceInput() {
-  if (syncingFromEditor) return;
-  if (sourceDebounce) clearTimeout(sourceDebounce);
-  sourceDebounce = setTimeout(() => {
-    const sp = document.getElementById("source-pane") as HTMLTextAreaElement;
-    syncingFromSource = true;
-    editor.commands.setContent(sp.value);
-    ctrl.applyCommentMarks();
-    syncingFromSource = false;
-    updateLineNumbers();
-  }, 300);
 }
 
 // ── Toolbar Actions ──────────────────────────────────────────────────
