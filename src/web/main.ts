@@ -510,27 +510,31 @@ function setupScrollSync() {
   if (!editorEl || !sourceEditor) return;
 
   let scrollSource: "editor" | "source" | null = null;
-  let rafId = 0;
+  let guardTimer = 0;
   const cmScroller = sourceEditor.view.scrollDOM;
 
-  const clearSource = () => { scrollSource = null; };
+  const guard = (source: "editor" | "source") => {
+    scrollSource = source;
+    clearTimeout(guardTimer);
+    guardTimer = window.setTimeout(() => { scrollSource = null; }, 50);
+  };
 
   const onEditorScroll = () => {
     if (!scrollSyncEnabled || scrollSource === "source") return;
-    scrollSource = "editor";
-    cancelAnimationFrame(rafId);
-    const ratio = editorEl.scrollTop / (editorEl.scrollHeight - editorEl.clientHeight || 1);
-    cmScroller.scrollTop = ratio * (cmScroller.scrollHeight - cmScroller.clientHeight);
-    rafId = requestAnimationFrame(clearSource);
+    guard("editor");
+    const max = editorEl.scrollHeight - editorEl.clientHeight;
+    if (max <= 0) return;
+    const ratio = editorEl.scrollTop / max;
+    cmScroller.scrollTop = Math.round(ratio * (cmScroller.scrollHeight - cmScroller.clientHeight));
   };
 
   const onSourceScroll = () => {
     if (!scrollSyncEnabled || scrollSource === "editor") return;
-    scrollSource = "source";
-    cancelAnimationFrame(rafId);
-    const ratio = cmScroller.scrollTop / (cmScroller.scrollHeight - cmScroller.clientHeight || 1);
-    editorEl.scrollTop = ratio * (editorEl.scrollHeight - editorEl.clientHeight);
-    rafId = requestAnimationFrame(clearSource);
+    guard("source");
+    const max = cmScroller.scrollHeight - cmScroller.clientHeight;
+    if (max <= 0) return;
+    const ratio = cmScroller.scrollTop / max;
+    editorEl.scrollTop = Math.round(ratio * (editorEl.scrollHeight - editorEl.clientHeight));
   };
 
   editorEl.addEventListener("scroll", onEditorScroll);
@@ -539,7 +543,7 @@ function setupScrollSync() {
   scrollSyncCleanup = () => {
     editorEl.removeEventListener("scroll", onEditorScroll);
     cmScroller.removeEventListener("scroll", onSourceScroll);
-    cancelAnimationFrame(rafId);
+    clearTimeout(guardTimer);
   };
 }
 
