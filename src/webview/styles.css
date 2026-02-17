@@ -453,6 +453,51 @@ mark.comment-mark.suggestion {
   100% { background: transparent; }
 }
 
+/* ── Source Pane ─────────────────────────────────────────────────────── */
+
+.source-pane {
+  flex: 1;
+  border: none;
+  border-left: 1px solid var(--vscode-panel-border);
+  padding: 32px 24px;
+  font-family: var(--vscode-editor-font-family, "SF Mono", "Fira Code", monospace);
+  font-size: var(--vscode-editor-font-size, 13px);
+  line-height: 1.6;
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  resize: none;
+  outline: none;
+  overflow-y: auto;
+  tab-size: 2;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.toolbar-toggle-source {
+  font-family: var(--vscode-editor-font-family, monospace) !important;
+  font-size: 11px !important;
+  font-weight: 600;
+  padding: 4px 8px !important;
+  border: 1px solid var(--vscode-panel-border) !important;
+  border-radius: 4px;
+}
+
+.toolbar-toggle-source.active {
+  background: var(--vscode-button-background) !important;
+  color: var(--vscode-button-foreground) !important;
+  border-color: var(--vscode-button-background) !important;
+}
+
+#main:has(.source-pane:not(.hidden)) #editor-container {
+  flex: 1;
+  max-width: 50%;
+}
+
+#main:has(.source-pane:not(.hidden)) .source-pane {
+  flex: 1;
+  max-width: 50%;
+}
+
 /* ── Utilities ──────────────────────────────────────────────────────── */
 
 .hidden {

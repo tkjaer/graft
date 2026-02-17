@@ -55,11 +55,13 @@ document.getElementById("app")!.innerHTML = `
       <button data-action="suggest" title="Suggest Change" class="toolbar-action">✏️</button>
     </div>
     <div class="toolbar-group toolbar-right">
+      <button data-action="toggle-source" title="Toggle markdown source" class="toolbar-toggle-source">MD</button>
       <button data-action="save" title="Save (⌘S)" class="toolbar-save">Save</button>
     </div>
   </div>
   <div id="main">
     <div id="editor-container"></div>
+    <textarea id="source-pane" class="source-pane hidden" spellcheck="false"></textarea>
     <div id="sidebar">
       ${sidebarHtml()}
     </div>
@@ -93,6 +95,50 @@ const ctrl = new CommentController(editor);
 ctrl.bindMarkClickHandler();
 ctrl.bindFormHandlers();
 
+// ── Source Pane ──────────────────────────────────────────────────────
+
+let sourceVisible = false;
+let syncingFromSource = false;
+let syncingFromEditor = false;
+let sourceDebounce: ReturnType<typeof setTimeout> | null = null;
+
+editor.on("update", () => {
+  if (syncingFromSource) return;
+  const sp = document.getElementById("source-pane") as HTMLTextAreaElement | null;
+  if (!sp || sp.classList.contains("hidden")) return;
+  syncingFromEditor = true;
+  sp.value = (editor.storage as any).markdown.getMarkdown();
+  syncingFromEditor = false;
+});
+
+function toggleSource() {
+  const sp = document.getElementById("source-pane") as HTMLTextAreaElement;
+  const btn = document.querySelector('[data-action="toggle-source"]') as HTMLElement;
+  sourceVisible = !sourceVisible;
+  if (sourceVisible) {
+    sp.value = (editor.storage as any).markdown.getMarkdown();
+    sp.classList.remove("hidden");
+    btn.classList.add("active");
+    sp.addEventListener("input", onSourceInput);
+  } else {
+    sp.classList.add("hidden");
+    btn.classList.remove("active");
+    sp.removeEventListener("input", onSourceInput);
+  }
+}
+
+function onSourceInput() {
+  if (syncingFromEditor) return;
+  if (sourceDebounce) clearTimeout(sourceDebounce);
+  sourceDebounce = setTimeout(() => {
+    const sp = document.getElementById("source-pane") as HTMLTextAreaElement;
+    syncingFromSource = true;
+    editor.commands.setContent(sp.value);
+    ctrl.applyCommentMarks();
+    syncingFromSource = false;
+  }, 300);
+}
+
 // ── Toolbar Actions ──────────────────────────────────────────────────
 
 document.getElementById("toolbar")!.addEventListener("click", (e) => {
@@ -108,6 +154,9 @@ document.getElementById("toolbar")!.addEventListener("click", (e) => {
       break;
     case "suggest":
       ctrl.startSuggestion();
+      break;
+    case "toggle-source":
+      toggleSource();
       break;
     case "save":
       save();
