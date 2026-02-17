@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'none';
+      script-src 'self';
+      style-src 'self' 'unsafe-inline';
+      connect-src https://api.github.com https://github.com;
+      img-src 'self' https:;
+      font-src 'self';">
+  <title>Graft — Collaborative Markdown Editor</title>
+  <meta name="description" content="WYSIWYG markdown editor with inline comments and suggestions, backed by GitHub">
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="../src/web/main.ts"></script>
+</body>
+</html>

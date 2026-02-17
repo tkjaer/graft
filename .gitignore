@@ -1,0 +1,6 @@
+node_modules/
+dist/
+dist-web/
+*.vsix
+.env
+.env.local
