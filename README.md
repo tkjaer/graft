@@ -7,6 +7,8 @@ A rich editor for markdown files that live in GitHub. Inline comments on text ra
 
 Built for teams that already collaborate in a repo. Everyone who can push a branch can edit and comment.
 
+> **Heads up:** This is a vibe-coded project. It works, but it hasn't been battle-tested. Use with caution — especially with repos you care about.
+
 ## The problem
 
 ADRs, RFCs, docs, blog posts — these belong in a repo, but they often start life in a shared doc because collaboration is easiest there. Then someone copies the final version into markdown, and the drafting history stays behind in a document nobody opens again.
