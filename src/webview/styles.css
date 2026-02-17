@@ -486,14 +486,21 @@ mark.comment-mark.suggestion {
   border-left-color: var(--vscode-editorCursor-foreground, var(--vscode-editor-foreground));
 }
 
-.source-pane .tok-link,
-.source-pane .tok-url {
-  color: var(--vscode-textLink-foreground, #3794ff);
-}
-
-.source-pane .tok-heading {
-  color: var(--vscode-editor-foreground);
-}
+/* Syntax highlighting — uses VS Code theme variables */
+.source-pane .tok-keyword { color: var(--vscode-debugTokenExpression-name, #c678dd); }
+.source-pane .tok-comment { color: var(--vscode-descriptionForeground, #7f848e); font-style: italic; }
+.source-pane .tok-string, .source-pane .tok-deleted { color: var(--vscode-debugTokenExpression-string, #e06c75); }
+.source-pane .tok-literal, .source-pane .tok-inserted { color: var(--vscode-debugTokenExpression-number, #98c379); }
+.source-pane .tok-atom, .source-pane .tok-bool,
+.source-pane .tok-labelName, .source-pane .tok-contentSeparator { color: var(--vscode-debugTokenExpression-number, #d19a66); }
+.source-pane .tok-variableName { color: var(--vscode-editor-foreground); }
+.source-pane .tok-meta { color: var(--vscode-descriptionForeground, #8b949e); }
+.source-pane .tok-heading { font-weight: bold; color: var(--vscode-editor-foreground); }
+.source-pane .tok-emphasis { font-style: italic; }
+.source-pane .tok-strong { font-weight: bold; }
+.source-pane .tok-link { color: var(--vscode-textLink-foreground, #3794ff); text-decoration: underline; }
+.source-pane .tok-url { color: var(--vscode-textLink-foreground, #3794ff); }
+.source-pane .tok-invalid { color: var(--vscode-errorForeground, #f00); }
 
 .source-pane .cm-content {
   font-family: var(--vscode-editor-font-family, "SF Mono", "Fira Code", monospace);

@@ -509,23 +509,28 @@ function setupScrollSync() {
   const editorEl = document.getElementById("editor-container");
   if (!editorEl || !sourceEditor) return;
 
-  let syncing = false;
+  let scrollSource: "editor" | "source" | null = null;
+  let rafId = 0;
   const cmScroller = sourceEditor.view.scrollDOM;
 
+  const clearSource = () => { scrollSource = null; };
+
   const onEditorScroll = () => {
-    if (!scrollSyncEnabled || syncing) return;
-    syncing = true;
+    if (!scrollSyncEnabled || scrollSource === "source") return;
+    scrollSource = "editor";
+    cancelAnimationFrame(rafId);
     const ratio = editorEl.scrollTop / (editorEl.scrollHeight - editorEl.clientHeight || 1);
     cmScroller.scrollTop = ratio * (cmScroller.scrollHeight - cmScroller.clientHeight);
-    syncing = false;
+    rafId = requestAnimationFrame(clearSource);
   };
 
   const onSourceScroll = () => {
-    if (!scrollSyncEnabled || syncing) return;
-    syncing = true;
+    if (!scrollSyncEnabled || scrollSource === "editor") return;
+    scrollSource = "source";
+    cancelAnimationFrame(rafId);
     const ratio = cmScroller.scrollTop / (cmScroller.scrollHeight - cmScroller.clientHeight || 1);
     editorEl.scrollTop = ratio * (editorEl.scrollHeight - editorEl.clientHeight);
-    syncing = false;
+    rafId = requestAnimationFrame(clearSource);
   };
 
   editorEl.addEventListener("scroll", onEditorScroll);
@@ -534,6 +539,7 @@ function setupScrollSync() {
   scrollSyncCleanup = () => {
     editorEl.removeEventListener("scroll", onEditorScroll);
     cmScroller.removeEventListener("scroll", onSourceScroll);
+    cancelAnimationFrame(rafId);
   };
 }
 

@@ -739,15 +739,36 @@ mark.comment-mark.suggestion {
   border-left-color: var(--fg);
 }
 
-@media (prefers-color-scheme: dark) {
-  .source-pane .tok-link,
-  .source-pane .tok-url {
-    color: #58a6ff;
-  }
+/* Syntax highlighting — light mode */
+.source-pane .tok-keyword { color: #708; }
+.source-pane .tok-comment { color: #940; font-style: italic; }
+.source-pane .tok-string, .source-pane .tok-deleted { color: #a11; }
+.source-pane .tok-literal, .source-pane .tok-inserted { color: #164; }
+.source-pane .tok-atom, .source-pane .tok-bool,
+.source-pane .tok-labelName, .source-pane .tok-contentSeparator { color: #219; }
+.source-pane .tok-variableName { color: #05a; }
+.source-pane .tok-typeName, .source-pane .tok-namespace { color: #085; }
+.source-pane .tok-className { color: #167; }
+.source-pane .tok-meta { color: #404740; }
+.source-pane .tok-heading { font-weight: bold; color: var(--fg); }
+.source-pane .tok-emphasis { font-style: italic; }
+.source-pane .tok-strong { font-weight: bold; }
+.source-pane .tok-link { color: var(--link); text-decoration: underline; }
+.source-pane .tok-url { color: var(--link); }
+.source-pane .tok-invalid { color: #f00; }
 
-  .source-pane .tok-heading {
-    color: #e6edf3;
-  }
+@media (prefers-color-scheme: dark) {
+  .source-pane .tok-keyword { color: #c678dd; }
+  .source-pane .tok-comment { color: #7f848e; }
+  .source-pane .tok-string, .source-pane .tok-deleted { color: #e06c75; }
+  .source-pane .tok-literal, .source-pane .tok-inserted { color: #98c379; }
+  .source-pane .tok-atom, .source-pane .tok-bool,
+  .source-pane .tok-labelName, .source-pane .tok-contentSeparator { color: #d19a66; }
+  .source-pane .tok-variableName { color: #e06c75; }
+  .source-pane .tok-typeName, .source-pane .tok-namespace { color: #e5c07b; }
+  .source-pane .tok-className { color: #e5c07b; }
+  .source-pane .tok-meta { color: #8b949e; }
+  .source-pane .tok-heading { color: #e6edf3; }
 }
 
 .source-pane .cm-vim-panel {
