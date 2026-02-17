@@ -32,7 +32,7 @@ Works as a **VS Code extension** or a **static web app** on GitHub Pages.
 
 **Comments live on an orphan branch.** `graft-comments` holds JSON files, keyed by branch and file path. No extra infrastructure, no noise in your content branches, full Git history on comments.
 
-**Text anchoring instead of line numbers.** Each comment stores the highlighted text plus ~50 chars of surrounding context. When the document changes, anchors re-resolve: exact match first, then fuzzy prefix/suffix matching, then orphaned. Comments don't break when someone adds a paragraph above yours.
+**Text anchoring instead of line numbers.** Each comment stores the highlighted text plus `~50` chars of surrounding context. When the document changes, anchors re-resolve: exact match first, then fuzzy prefix/suffix matching, then orphaned. Comments don't break when someone adds a paragraph above yours.
 
 **Default branch is read-only.** You can't accidentally edit `main`. The editor prompts you to create a feature branch, then switches to it.
 

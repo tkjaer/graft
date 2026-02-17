@@ -486,6 +486,15 @@ mark.comment-mark.suggestion {
   border-left-color: var(--vscode-editorCursor-foreground, var(--vscode-editor-foreground));
 }
 
+.source-pane .tok-link,
+.source-pane .tok-url {
+  color: var(--vscode-textLink-foreground, #3794ff);
+}
+
+.source-pane .tok-heading {
+  color: var(--vscode-editor-foreground);
+}
+
 .source-pane .cm-content {
   font-family: var(--vscode-editor-font-family, "SF Mono", "Fira Code", monospace);
   font-size: var(--vscode-editor-font-size, 13px);

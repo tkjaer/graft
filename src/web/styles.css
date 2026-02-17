@@ -739,6 +739,17 @@ mark.comment-mark.suggestion {
   border-left-color: var(--fg);
 }
 
+@media (prefers-color-scheme: dark) {
+  .source-pane .tok-link,
+  .source-pane .tok-url {
+    color: #58a6ff;
+  }
+
+  .source-pane .tok-heading {
+    color: #e6edf3;
+  }
+}
+
 .source-pane .cm-vim-panel {
   background: var(--bg-secondary);
   color: var(--fg);
