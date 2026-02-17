@@ -76,7 +76,11 @@ export abstract class BaseGitHubApi {
       const candidateBranch = parts.slice(0, i).join("/");
       const candidatePath = parts.slice(i).join("/");
       try {
-        await ok.git.getRef({ owner, repo, ref: `heads/${candidateBranch}` });
+        await ok.request("GET /repos/{owner}/{repo}/git/ref/{+ref}", {
+          owner,
+          repo,
+          ref: `heads/${candidateBranch}`,
+        });
         return { branch: candidateBranch, path: candidatePath };
       } catch (err: any) {
         if (err.status === 404) continue;
@@ -95,11 +99,10 @@ export abstract class BaseGitHubApi {
     fromBranch: string,
   ): Promise<void> {
     const ok = await this.getOctokit();
-    const { data: ref } = await ok.git.getRef({
-      owner,
-      repo,
-      ref: `heads/${fromBranch}`,
-    });
+    const { data: ref } = await ok.request(
+      "GET /repos/{owner}/{repo}/git/ref/{+ref}",
+      { owner, repo, ref: `heads/${fromBranch}` },
+    );
     await ok.git.createRef({
       owner,
       repo,
@@ -285,7 +288,11 @@ export abstract class BaseGitHubApi {
   ): Promise<void> {
     const ok = await this.getOctokit();
     try {
-      await ok.git.getRef({ owner, repo, ref: `heads/${COMMENTS_BRANCH}` });
+      await ok.request("GET /repos/{owner}/{repo}/git/ref/{+ref}", {
+        owner,
+        repo,
+        ref: `heads/${COMMENTS_BRANCH}`,
+      });
     } catch (err: any) {
       if (err.status === 404) {
         const { data: blob } = await ok.git.createBlob({
