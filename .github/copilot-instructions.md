@@ -48,7 +48,9 @@ Shared modules: src/shared/anchoring.ts, src/shared/url.ts, src/types.ts
 
 ### Key design decisions
 
-1. **Tiptap + tiptap-markdown** — WYSIWYG editing with markdown serialization. Users never see markdown syntax. The file on disk is always `.md`.
+1. **Tiptap + tiptap-markdown** — WYSIWYG editing with markdown serialization. Users never see markdown syntax unless they open the source pane. The file on disk is always `.md`.
+
+2. **Split view with CodeMirror 6** — A toggleable source pane shows the raw markdown side-by-side with the WYSIWYG editor. Built with CodeMirror 6 (`@codemirror/view`, `@codemirror/lang-markdown`). Changes sync bidirectionally with debouncing. Optional vim bindings via `@replit/codemirror-vim` (toggled at runtime using a CodeMirror `Compartment`). Scroll position syncs proportionally between panes (with a 50ms guard + `Math.round()` to prevent feedback loops).
 
 2. **Comments on an orphan branch** — Comments are stored as JSON files on a `graft-comments` orphan branch in the same repo. This avoids polluting the main branch, requires zero infrastructure (no database), and comments get full Git history for free. The branch is created automatically on first comment.
 
@@ -62,6 +64,10 @@ Shared modules: src/shared/anchoring.ts, src/shared/url.ts, src/types.ts
 
 7. **No backend** — Both the extension and web app are fully client-side. The web app is a static site on GitHub Pages. GitHub handles auth, storage, and access control.
 
+8. **Themes** — The web app supports multiple themes (GitHub Light, GitHub Dark, GitHub Dark Dimmed, Dracula, Solarized Light) defined in `src/shared/themes.ts`. Each theme is a set of CSS variable values applied to `:root` via JS. Defaults to system preference, persisted in `localStorage`. The VS Code extension uses VS Code's own theme via `--vscode-*` CSS variables.
+
+9. **Syntax highlighting via `classHighlighter`** — Instead of CodeMirror's `defaultHighlightStyle` (which injects inline colors), we use `classHighlighter` from `@lezer/highlight` which only adds `.tok-*` CSS classes. This lets themes control syntax colors via CSS variables (`--syn-keyword`, `--syn-comment`, etc.).
+
 ## File structure
 
 ```
@@ -72,17 +78,19 @@ src/
   shared/
     anchoring.ts        — Text anchor creation + resolution (shared, pure functions)
     url.ts              — GitHub URL parsing (shared)
+    source-editor.ts    — CodeMirror 6 source pane (shared between extension + web)
+    themes.ts           — Theme definitions + application (web app only)
   github/
     auth.ts             — GitHub OAuth via VS Code authentication API
     api.ts              — Octokit wrapper (Node, uses Buffer)
   webview/
     main.ts             — Tiptap editor for VS Code webview (uses postMessage)
-    styles.css          — VS Code-themed styles (uses CSS variables)
+    styles.css          — VS Code-themed styles (uses --vscode-* CSS variables)
   web/
     main.ts             — Web app entry: login, file picker, editor (direct API calls)
     api.ts              — Octokit wrapper (browser, uses btoa/atob)
     auth.ts             — Device flow authentication
-    styles.css          — Standalone web styles (light/dark via prefers-color-scheme)
+    styles.css          — Web styles (theme-driven via CSS variables)
     env.d.ts            — Vite env type declarations
 web/
   index.html            — Web app HTML entry point (for Vite)
@@ -151,6 +159,9 @@ vite.config.ts          — Vite config for web app build
 ## Tech stack
 
 - **Editor**: Tiptap v2 + ProseMirror (via `@tiptap/core`, `@tiptap/starter-kit`)
+- **Source pane**: CodeMirror 6 (`@codemirror/view`, `@codemirror/state`, `@codemirror/lang-markdown`)
+- **Vim bindings**: `@replit/codemirror-vim` (optional, runtime toggle via `Compartment`)
+- **Syntax highlighting**: `classHighlighter` from `@lezer/highlight` (CSS class–based)
 - **Markdown**: `tiptap-markdown` for round-trip serialization
 - **GitHub API**: `@octokit/rest` v21
 - **Extension build**: esbuild (dual bundle: Node extension + browser webview)

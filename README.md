@@ -28,6 +28,15 @@ Open a GitHub file URL or PR. You get a WYSIWYG editor (Tiptap). Select text to 
 
 Works as a **VS Code extension** or a **static web app** on GitHub Pages.
 
+## Features
+
+- **WYSIWYG + source split view** — toggle a side-by-side markdown source pane (CodeMirror 6) next to the rich editor. Changes sync both ways in real time.
+- **Optional vim bindings** — enable vim mode in the source pane with one click. Preference is remembered across sessions.
+- **Scroll sync** — proportional scroll synchronization between the WYSIWYG and source panes (toggle on/off).
+- **Inline comments and suggestions** — select text to leave a comment or propose a replacement. Comments anchor to text ranges, not line numbers.
+- **Themes** — GitHub Light, GitHub Dark, GitHub Dark Dimmed, Dracula, and Solarized Light. Defaults to system preference. Persisted in localStorage.
+- **Read-only mode** — default branch and merged PRs open read-only. Create a branch from the editor to start editing.
+
 ## The interesting bits
 
 **Comments live on an orphan branch.** `graft-comments` holds JSON files, keyed by branch and file path. No extra infrastructure, no noise in your content branches, full Git history on comments.
