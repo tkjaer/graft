@@ -8,7 +8,15 @@ Sign in with GitHub, then install the [Graft GitHub App](https://github.com/apps
 
 The VS Code extension uses your existing GitHub sign-in — no app install needed.
 
+Web app showing split `WYSIWYG` and markdown editor:
+
+<img width="2788" height="1828" alt="Web app with markdown screenshot" src="https://github.com/user-attachments/assets/4c143fb3-0e76-4425-bbb0-c6037616ba13" />
+
+Web app showing inline comments:
+
 <img width="2356" height="1568" alt="Web app screenshot" src="https://github.com/user-attachments/assets/aafa3a55-fadb-4e78-a42c-5c4f898c8547" />
+
+VSCode app:
 
 <img width="2360" height="1432" alt="VSCode app screenshot" src="https://github.com/user-attachments/assets/e03fd1eb-ebc1-4274-a79e-ebe8334b2c18" />
 
@@ -27,6 +35,15 @@ Graft lets you skip the round-trip. Write and review markdown directly in GitHub
 Open a GitHub file URL or PR. You get a WYSIWYG editor (Tiptap). Select text to comment or suggest changes. Save commits directly to the branch. The file stays as markdown in your repo the whole time.
 
 Works as a **VS Code extension** or a **static web app** on GitHub Pages.
+
+## Features
+
+- **WYSIWYG + source split view** — toggle a side-by-side markdown source pane (CodeMirror 6) next to the rich editor. Changes sync both ways in real time.
+- **Optional vim bindings** — enable vim mode in the source pane with one click. Preference is remembered across sessions.
+- **Scroll sync** — proportional scroll synchronization between the WYSIWYG and source panes (toggle on/off).
+- **Inline comments and suggestions** — select text to leave a comment or propose a replacement. Comments anchor to text ranges, not line numbers.
+- **Themes** — GitHub Light, GitHub Dark, GitHub Dark Dimmed, Dracula, and Solarized Light. Defaults to system preference. Persisted in localStorage.
+- **Read-only mode** — default branch and merged PRs open read-only. Create a branch from the editor to start editing.
 
 ## The interesting bits
 
