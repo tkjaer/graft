@@ -8,7 +8,15 @@ Sign in with GitHub, then install the [Graft GitHub App](https://github.com/apps
 
 The VS Code extension uses your existing GitHub sign-in — no app install needed.
 
+Web app showing split `WYSIWYG` and markdown editor:
+
+<img width="2788" height="1828" alt="Web app with markdown screenshot" src="https://github.com/user-attachments/assets/4c143fb3-0e76-4425-bbb0-c6037616ba13" />
+
+Web app showing inline comments:
+
 <img width="2356" height="1568" alt="Web app screenshot" src="https://github.com/user-attachments/assets/aafa3a55-fadb-4e78-a42c-5c4f898c8547" />
+
+VSCode app:
 
 <img width="2360" height="1432" alt="VSCode app screenshot" src="https://github.com/user-attachments/assets/e03fd1eb-ebc1-4274-a79e-ebe8334b2c18" />
 
