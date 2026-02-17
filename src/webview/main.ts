@@ -13,6 +13,7 @@ import {
   handleFormatAction,
   sidebarHtml,
 } from "../shared/editor";
+import { createSourceEditor, type SourceEditor } from "../shared/source-editor";
 
 import "./styles.css";
 
@@ -61,7 +62,7 @@ document.getElementById("app")!.innerHTML = `
   </div>
   <div id="main">
     <div id="editor-container"></div>
-    <textarea id="source-pane" class="source-pane hidden" spellcheck="false"></textarea>
+    <div id="source-pane" class="source-pane hidden"></div>
     <div id="sidebar">
       ${sidebarHtml()}
     </div>
@@ -100,43 +101,47 @@ ctrl.bindFormHandlers();
 let sourceVisible = false;
 let syncingFromSource = false;
 let syncingFromEditor = false;
-let sourceDebounce: ReturnType<typeof setTimeout> | null = null;
+let sourceEditor: SourceEditor | null = null;
 
 editor.on("update", () => {
   if (syncingFromSource) return;
-  const sp = document.getElementById("source-pane") as HTMLTextAreaElement | null;
-  if (!sp || sp.classList.contains("hidden")) return;
+  if (!sourceEditor || !sourceVisible) return;
   syncingFromEditor = true;
-  sp.value = (editor.storage as any).markdown.getMarkdown();
+  sourceEditor.setContent(stripCommentMarks((editor.storage as any).markdown.getMarkdown()));
   syncingFromEditor = false;
 });
 
-function toggleSource() {
-  const sp = document.getElementById("source-pane") as HTMLTextAreaElement;
-  const btn = document.querySelector('[data-action="toggle-source"]') as HTMLElement;
-  sourceVisible = !sourceVisible;
-  if (sourceVisible) {
-    sp.value = (editor.storage as any).markdown.getMarkdown();
-    sp.classList.remove("hidden");
-    btn.classList.add("active");
-    sp.addEventListener("input", onSourceInput);
-  } else {
-    sp.classList.add("hidden");
-    btn.classList.remove("active");
-    sp.removeEventListener("input", onSourceInput);
-  }
+function stripCommentMarks(md: string): string {
+  return md.replace(/<mark[^>]*data-comment-id[^>]*>/g, "").replace(/<\/mark>/g, "");
 }
 
-function onSourceInput() {
-  if (syncingFromEditor) return;
-  if (sourceDebounce) clearTimeout(sourceDebounce);
-  sourceDebounce = setTimeout(() => {
-    const sp = document.getElementById("source-pane") as HTMLTextAreaElement;
-    syncingFromSource = true;
-    editor.commands.setContent(sp.value);
-    ctrl.applyCommentMarks();
-    syncingFromSource = false;
-  }, 300);
+function toggleSource() {
+  const pane = document.getElementById("source-pane")!;
+  const btn = document.querySelector('[data-action="toggle-source"]') as HTMLElement;
+  sourceVisible = !sourceVisible;
+
+  if (sourceVisible) {
+    const md = stripCommentMarks((editor.storage as any).markdown.getMarkdown());
+    pane.classList.remove("hidden");
+    btn.classList.add("active");
+    let debounce: ReturnType<typeof setTimeout> | null = null;
+    sourceEditor = createSourceEditor(pane, md, (content) => {
+      if (syncingFromEditor) return;
+      if (debounce) clearTimeout(debounce);
+      debounce = setTimeout(() => {
+        syncingFromSource = true;
+        editor.commands.setContent(content);
+        ctrl.applyCommentMarks();
+        syncingFromSource = false;
+      }, 300);
+    });
+  } else {
+    sourceEditor?.destroy();
+    sourceEditor = null;
+    pane.innerHTML = "";
+    pane.classList.add("hidden");
+    btn.classList.remove("active");
+  }
 }
 
 // ── Toolbar Actions ──────────────────────────────────────────────────

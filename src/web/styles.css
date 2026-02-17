@@ -711,20 +711,49 @@ mark.comment-mark.suggestion {
 
 .source-pane {
   flex: 1;
-  border: none;
   border-left: 1px solid var(--border);
-  padding: 32px 24px;
-  font-family: "SF Mono", "Fira Code", monospace;
-  font-size: 13px;
-  line-height: 1.6;
+  overflow: hidden;
+}
+
+.source-pane .cm-editor {
+  height: 100%;
   background: var(--bg);
   color: var(--fg);
-  resize: none;
-  outline: none;
-  overflow-y: auto;
-  tab-size: 2;
-  white-space: pre-wrap;
-  word-wrap: break-word;
+}
+
+.source-pane .cm-gutters {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  border-right: 1px solid var(--border);
+}
+
+.source-pane .cm-activeLineGutter {
+  background: var(--hover-bg);
+}
+
+.source-pane .cm-activeLine {
+  background: var(--hover-bg);
+}
+
+.source-pane .cm-cursor {
+  border-left-color: var(--fg);
+}
+
+.source-pane .cm-vim-panel {
+  background: var(--bg-secondary);
+  color: var(--fg);
+  border-top: 1px solid var(--border);
+  padding: 2px 8px;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 13px;
+}
+
+.source-pane .cm-vim-panel input {
+  background: var(--input-bg);
+  color: var(--fg);
+  border: 1px solid var(--input-border);
+  font-family: inherit;
+  font-size: inherit;
 }
 
 .toolbar-toggle-source {
@@ -750,7 +779,6 @@ mark.comment-mark.suggestion {
 
 #main:has(.source-pane:not(.hidden)) .source-pane {
   flex: 1;
-  max-width: 50%;
 }
 
 /* ── Utilities ──────────────────────────────────────────────────────── */

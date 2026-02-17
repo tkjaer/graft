@@ -16,6 +16,7 @@ import {
   sidebarHtml,
   esc,
 } from "../shared/editor";
+import { createSourceEditor, type SourceEditor } from "../shared/source-editor";
 import { WebGitHubApi } from "./api";
 import {
   getToken,
@@ -46,6 +47,7 @@ let ctrl: CommentController;
 let sourceVisible = false;
 let syncingFromSource = false;
 let syncingFromEditor = false;
+let sourceEditor: SourceEditor | null = null;
 
 const appEl = document.getElementById("app")!;
 
@@ -387,7 +389,7 @@ function showEditorUI(markdown: string, fileName: string) {
     </div>
     <div id="main">
       <div id="editor-container"></div>
-      <textarea id="source-pane" class="source-pane hidden" spellcheck="false"></textarea>
+      <div id="source-pane" class="source-pane hidden"></div>
       <div id="sidebar">${sidebarHtml()}</div>
     </div>
   `;
@@ -452,46 +454,46 @@ function showEditorUI(markdown: string, fileName: string) {
   // Sync WYSIWYG → source pane
   editor.on("update", () => {
     if (syncingFromSource) return;
-    const sourcePaneEl = document.getElementById("source-pane") as HTMLTextAreaElement | null;
-    if (!sourcePaneEl || sourcePaneEl.classList.contains("hidden")) return;
+    if (!sourceEditor || !sourceVisible) return;
     syncingFromEditor = true;
-    sourcePaneEl.value = (editor.storage as any).markdown.getMarkdown();
+    sourceEditor.setContent(stripCommentMarks((editor.storage as any).markdown.getMarkdown()));
     syncingFromEditor = false;
   });
 }
 
+function stripCommentMarks(md: string): string {
+  return md.replace(/<mark[^>]*data-comment-id[^>]*>/g, "").replace(/<\/mark>/g, "");
+}
+
 // ── Source Pane ───────────────────────────────────────────────────────
 
-let sourceDebounce: ReturnType<typeof setTimeout> | null = null;
-
 function toggleSource() {
-  const sourcePaneEl = document.getElementById("source-pane") as HTMLTextAreaElement;
+  const pane = document.getElementById("source-pane")!;
   const btn = document.querySelector('[data-action="toggle-source"]') as HTMLElement;
   sourceVisible = !sourceVisible;
 
   if (sourceVisible) {
-    sourcePaneEl.value = (editor.storage as any).markdown.getMarkdown();
-    sourcePaneEl.classList.remove("hidden");
+    const md = stripCommentMarks((editor.storage as any).markdown.getMarkdown());
+    pane.classList.remove("hidden");
     btn.classList.add("active");
-
-    sourcePaneEl.addEventListener("input", onSourceInput);
+    let debounce: ReturnType<typeof setTimeout> | null = null;
+    sourceEditor = createSourceEditor(pane, md, (content) => {
+      if (syncingFromEditor) return;
+      if (debounce) clearTimeout(debounce);
+      debounce = setTimeout(() => {
+        syncingFromSource = true;
+        editor.commands.setContent(content);
+        ctrl.applyCommentMarks();
+        syncingFromSource = false;
+      }, 300);
+    });
   } else {
-    sourcePaneEl.classList.add("hidden");
+    sourceEditor?.destroy();
+    sourceEditor = null;
+    pane.innerHTML = "";
+    pane.classList.add("hidden");
     btn.classList.remove("active");
-    sourcePaneEl.removeEventListener("input", onSourceInput);
   }
-}
-
-function onSourceInput() {
-  if (syncingFromEditor) return;
-  if (sourceDebounce) clearTimeout(sourceDebounce);
-  sourceDebounce = setTimeout(() => {
-    const sourcePaneEl = document.getElementById("source-pane") as HTMLTextAreaElement;
-    syncingFromSource = true;
-    editor.commands.setContent(sourcePaneEl.value);
-    ctrl.applyCommentMarks();
-    syncingFromSource = false;
-  }, 300);
 }
 
 async function promptCreateBranch() {
