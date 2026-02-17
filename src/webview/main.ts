@@ -124,6 +124,7 @@ function stripCommentMarks(md: string): string {
 function toggleVim() {
   if (!sourceEditor) return;
   const active = sourceEditor.toggleVim();
+  vscode.setState({ ...vscode.getState(), vimEnabled: active });
   const btn = document.getElementById("vim-toggle");
   if (btn) btn.classList.toggle("active", active);
 }
@@ -216,6 +217,11 @@ function toggleSource() {
         syncingFromSource = false;
       }, 300);
     });
+    // Restore vim mode if previously enabled
+    if (vscode.getState()?.vimEnabled && !sourceEditor.vimEnabled) {
+      sourceEditor.toggleVim();
+      vimBtn?.classList.add("active");
+    }
     setupScrollSync();
   } else {
     cleanupScrollSync();

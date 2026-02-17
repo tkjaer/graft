@@ -17,6 +17,11 @@ import {
   esc,
 } from "../shared/editor";
 import { createSourceEditor, type SourceEditor } from "../shared/source-editor";
+import {
+  initTheme,
+  themePickerHtml,
+  bindThemePicker,
+} from "../shared/themes";
 import { WebGitHubApi } from "./api";
 import {
   getToken,
@@ -57,6 +62,8 @@ const appEl = document.getElementById("app")!;
 // ── App Init ─────────────────────────────────────────────────────────
 
 async function boot() {
+  initTheme();
+
   const valid = await validateToken();
   if (valid) {
     api = new WebGitHubApi(getToken()!);
@@ -81,6 +88,7 @@ async function boot() {
 function showLoginScreen() {
   appEl.innerHTML = `
     <div class="screen">
+      <div class="screen-theme">${themePickerHtml()}</div>
       <div class="screen-card">
         <h1>Graft</h1>
         <p class="screen-desc">Collaborative markdown editor backed by GitHub</p>
@@ -94,6 +102,7 @@ function showLoginScreen() {
     </div>
   `;
 
+  bindThemePicker();
   document.getElementById("login-btn")!.addEventListener("click", startLogin);
 }
 
@@ -145,6 +154,7 @@ async function startLogin() {
 function showOpenScreen() {
   appEl.innerHTML = `
     <div class="screen">
+      <div class="screen-theme">${themePickerHtml()}</div>
       <div class="screen-card">
         <div class="screen-header">
           <h1>Graft</h1>
@@ -175,6 +185,8 @@ function showOpenScreen() {
     api = null;
     showLoginScreen();
   });
+
+  bindThemePicker();
 
   const input = document.getElementById("url-input") as HTMLInputElement;
   const openBtn = document.getElementById("open-btn")!;
@@ -375,11 +387,13 @@ function showEditorUI(markdown: string, fileName: string) {
   const saveControls = readOnly
     ? `<span class="readonly-badge">Read-only (${readOnlyReason})</span>
        <button data-action="toggle-sidebar" title="Toggle comments" class="toolbar-toggle-source active" id="sidebar-toggle">💬</button>
+       ${themePickerHtml()}
        ${isDefaultBranch ? `<button data-action="create-branch" class="toolbar-save">Create branch to edit</button>` : ""}`
     : `<button data-action="toggle-source" title="Toggle markdown source" class="toolbar-toggle-source">MD</button>
        <button data-action="toggle-vim" title="Toggle vim mode" class="toolbar-toggle-source hidden" id="vim-toggle">VIM</button>
        <button data-action="toggle-scroll-sync" title="Toggle scroll sync" class="toolbar-toggle-source hidden active" id="sync-toggle">SYNC</button>
        <button data-action="toggle-sidebar" title="Toggle comments" class="toolbar-toggle-source active" id="sidebar-toggle">💬</button>
+       ${themePickerHtml()}
        <button data-action="save" title="Save (⌘S)" class="toolbar-save">Save</button>`;
 
   appEl.innerHTML = `
@@ -428,6 +442,7 @@ function showEditorUI(markdown: string, fileName: string) {
   ctrl.readOnly = readOnly;
   ctrl.bindMarkClickHandler();
   ctrl.bindFormHandlers();
+  bindThemePicker();
 
   document.getElementById("toolbar")!.addEventListener("click", (e) => {
     const btn = (e.target as HTMLElement).closest(
@@ -486,6 +501,7 @@ function stripCommentMarks(md: string): string {
 function toggleVim() {
   if (!sourceEditor) return;
   const active = sourceEditor.toggleVim();
+  localStorage.setItem("graft-vim", active ? "1" : "0");
   const btn = document.getElementById("vim-toggle");
   if (btn) btn.classList.toggle("active", active);
 }
@@ -578,6 +594,11 @@ function toggleSource() {
         syncingFromSource = false;
       }, 300);
     });
+    // Restore vim mode if previously enabled
+    if (localStorage.getItem("graft-vim") === "1" && !sourceEditor.vimEnabled) {
+      sourceEditor.toggleVim();
+      vimBtn?.classList.add("active");
+    }
     setupScrollSync();
   } else {
     cleanupScrollSync();

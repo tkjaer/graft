@@ -25,29 +25,18 @@
   --diff-ins-fg: #1a7f37;
   --hover-bg: rgba(208, 215, 222, 0.32);
   --flash-bg: rgba(255, 212, 0, 0.3);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0d1117;
-    --fg: #e6edf3;
-    --bg-secondary: #161b22;
-    --border: #30363d;
-    --border-light: #21262d;
-    --text-muted: #8b949e;
-    --link: #58a6ff;
-    --btn-bg: #238636;
-    --btn-fg: #ffffff;
-    --btn-hover: #2ea043;
-    --input-bg: #0d1117;
-    --input-border: #30363d;
-    --code-bg: #161b22;
-    --sidebar-bg: #010409;
-    --diff-del-fg: #f85149;
-    --diff-ins-fg: #3fb950;
-    --hover-bg: rgba(177, 186, 196, 0.12);
-    --flash-bg: rgba(255, 212, 0, 0.15);
-  }
+  /* Syntax highlighting (overridden per-theme via JS) */
+  --syn-keyword: #cf222e;
+  --syn-comment: #6e7781;
+  --syn-string: #0a3069;
+  --syn-literal: #0550ae;
+  --syn-atom: #0550ae;
+  --syn-variable: #953800;
+  --syn-type: #953800;
+  --syn-class: #953800;
+  --syn-meta: #6e7781;
+  --syn-heading: #0550ae;
+  --syn-invalid: #cf222e;
 }
 
 * {
@@ -741,38 +730,23 @@ mark.comment-mark.suggestion {
   border-left-color: var(--fg);
 }
 
-/* Syntax highlighting — GitHub Light */
-.source-pane .tok-keyword { color: #cf222e; }
-.source-pane .tok-comment { color: #6e7781; font-style: italic; }
-.source-pane .tok-string, .source-pane .tok-deleted { color: #0a3069; }
-.source-pane .tok-literal, .source-pane .tok-inserted { color: #0550ae; }
+/* Syntax highlighting — driven by CSS variables (set per-theme via JS) */
+.source-pane .tok-keyword { color: var(--syn-keyword); }
+.source-pane .tok-comment { color: var(--syn-comment); font-style: italic; }
+.source-pane .tok-string, .source-pane .tok-deleted { color: var(--syn-string); }
+.source-pane .tok-literal, .source-pane .tok-inserted { color: var(--syn-literal); }
 .source-pane .tok-atom, .source-pane .tok-bool,
-.source-pane .tok-labelName, .source-pane .tok-contentSeparator { color: #0550ae; }
-.source-pane .tok-variableName { color: #953800; }
-.source-pane .tok-typeName, .source-pane .tok-namespace { color: #953800; }
-.source-pane .tok-className { color: #953800; }
-.source-pane .tok-meta { color: #6e7781; }
-.source-pane .tok-heading { font-weight: bold; color: #0550ae; }
+.source-pane .tok-labelName, .source-pane .tok-contentSeparator { color: var(--syn-atom); }
+.source-pane .tok-variableName { color: var(--syn-variable); }
+.source-pane .tok-typeName, .source-pane .tok-namespace { color: var(--syn-type); }
+.source-pane .tok-className { color: var(--syn-class); }
+.source-pane .tok-meta { color: var(--syn-meta); }
+.source-pane .tok-heading { font-weight: bold; color: var(--syn-heading); }
 .source-pane .tok-emphasis { font-style: italic; }
 .source-pane .tok-strong { font-weight: bold; }
 .source-pane .tok-link { color: var(--link); text-decoration: underline; }
 .source-pane .tok-url { color: var(--link); }
-.source-pane .tok-invalid { color: #cf222e; }
-
-/* Syntax highlighting — GitHub Dark */
-@media (prefers-color-scheme: dark) {
-  .source-pane .tok-keyword { color: #ff7b72; }
-  .source-pane .tok-comment { color: #8b949e; }
-  .source-pane .tok-string, .source-pane .tok-deleted { color: #a5d6ff; }
-  .source-pane .tok-literal, .source-pane .tok-inserted { color: #79c0ff; }
-  .source-pane .tok-atom, .source-pane .tok-bool,
-  .source-pane .tok-labelName, .source-pane .tok-contentSeparator { color: #79c0ff; }
-  .source-pane .tok-variableName { color: #ffa657; }
-  .source-pane .tok-typeName, .source-pane .tok-namespace { color: #ffa657; }
-  .source-pane .tok-className { color: #ffa657; }
-  .source-pane .tok-meta { color: #8b949e; }
-  .source-pane .tok-heading { color: #79c0ff; }
-}
+.source-pane .tok-invalid { color: var(--syn-invalid); }
 
 .source-pane .cm-vim-panel {
   background: var(--bg-secondary);
@@ -814,6 +788,41 @@ mark.comment-mark.suggestion {
 
 #main:has(.source-pane:not(.hidden)) .source-pane {
   flex: 1;
+}
+
+/* ── Theme Picker ───────────────────────────────────────────────────── */
+
+.theme-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--bg-secondary);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 24px 4px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23656d76' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+}
+
+.theme-select:hover {
+  border-color: var(--text-muted);
+}
+
+.theme-select:focus-visible {
+  border-color: var(--link);
+  box-shadow: 0 0 0 2px rgba(9, 105, 218, 0.3);
+}
+
+/* Theme picker on login/open screens */
+.screen-theme {
+  position: fixed;
+  top: 16px;
+  right: 16px;
 }
 
 /* ── Utilities ──────────────────────────────────────────────────────── */
