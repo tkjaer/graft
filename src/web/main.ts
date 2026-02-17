@@ -48,6 +48,9 @@ let sourceVisible = false;
 let syncingFromSource = false;
 let syncingFromEditor = false;
 let sourceEditor: SourceEditor | null = null;
+let scrollSyncEnabled = true;
+let sidebarVisible = true;
+let scrollSyncCleanup: (() => void) | null = null;
 
 const appEl = document.getElementById("app")!;
 
@@ -371,9 +374,12 @@ function showEditorUI(markdown: string, fileName: string) {
     : "default branch";
   const saveControls = readOnly
     ? `<span class="readonly-badge">Read-only (${readOnlyReason})</span>
+       <button data-action="toggle-sidebar" title="Toggle comments" class="toolbar-toggle-source active" id="sidebar-toggle">💬</button>
        ${isDefaultBranch ? `<button data-action="create-branch" class="toolbar-save">Create branch to edit</button>` : ""}`
     : `<button data-action="toggle-source" title="Toggle markdown source" class="toolbar-toggle-source">MD</button>
        <button data-action="toggle-vim" title="Toggle vim mode" class="toolbar-toggle-source hidden" id="vim-toggle">VIM</button>
+       <button data-action="toggle-scroll-sync" title="Toggle scroll sync" class="toolbar-toggle-source hidden active" id="sync-toggle">SYNC</button>
+       <button data-action="toggle-sidebar" title="Toggle comments" class="toolbar-toggle-source active" id="sidebar-toggle">💬</button>
        <button data-action="save" title="Save (⌘S)" class="toolbar-save">Save</button>`;
 
   appEl.innerHTML = `
@@ -450,6 +456,12 @@ function showEditorUI(markdown: string, fileName: string) {
       case "toggle-vim":
         toggleVim();
         break;
+      case "toggle-scroll-sync":
+        toggleScrollSync();
+        break;
+      case "toggle-sidebar":
+        toggleSidebar();
+        break;
       case "save":
         save();
         break;
@@ -478,10 +490,65 @@ function toggleVim() {
   if (btn) btn.classList.toggle("active", active);
 }
 
+function toggleScrollSync() {
+  scrollSyncEnabled = !scrollSyncEnabled;
+  const btn = document.getElementById("sync-toggle");
+  if (btn) btn.classList.toggle("active", scrollSyncEnabled);
+}
+
+function toggleSidebar() {
+  sidebarVisible = !sidebarVisible;
+  const sidebar = document.getElementById("sidebar");
+  const btn = document.getElementById("sidebar-toggle");
+  if (sidebar) sidebar.classList.toggle("hidden", !sidebarVisible);
+  if (btn) btn.classList.toggle("active", sidebarVisible);
+}
+
+function setupScrollSync() {
+  cleanupScrollSync();
+  const editorEl = document.getElementById("editor-container");
+  if (!editorEl || !sourceEditor) return;
+
+  let syncing = false;
+  const cmScroller = sourceEditor.view.scrollDOM;
+
+  const onEditorScroll = () => {
+    if (!scrollSyncEnabled || syncing) return;
+    syncing = true;
+    const ratio = editorEl.scrollTop / (editorEl.scrollHeight - editorEl.clientHeight || 1);
+    cmScroller.scrollTop = ratio * (cmScroller.scrollHeight - cmScroller.clientHeight);
+    syncing = false;
+  };
+
+  const onSourceScroll = () => {
+    if (!scrollSyncEnabled || syncing) return;
+    syncing = true;
+    const ratio = cmScroller.scrollTop / (cmScroller.scrollHeight - cmScroller.clientHeight || 1);
+    editorEl.scrollTop = ratio * (editorEl.scrollHeight - editorEl.clientHeight);
+    syncing = false;
+  };
+
+  editorEl.addEventListener("scroll", onEditorScroll);
+  cmScroller.addEventListener("scroll", onSourceScroll);
+
+  scrollSyncCleanup = () => {
+    editorEl.removeEventListener("scroll", onEditorScroll);
+    cmScroller.removeEventListener("scroll", onSourceScroll);
+  };
+}
+
+function cleanupScrollSync() {
+  if (scrollSyncCleanup) {
+    scrollSyncCleanup();
+    scrollSyncCleanup = null;
+  }
+}
+
 function toggleSource() {
   const pane = document.getElementById("source-pane")!;
   const btn = document.querySelector('[data-action="toggle-source"]') as HTMLElement;
   const vimBtn = document.getElementById("vim-toggle");
+  const syncBtn = document.getElementById("sync-toggle");
   sourceVisible = !sourceVisible;
 
   if (sourceVisible) {
@@ -489,6 +556,7 @@ function toggleSource() {
     pane.classList.remove("hidden");
     btn.classList.add("active");
     vimBtn?.classList.remove("hidden");
+    syncBtn?.classList.remove("hidden");
     let debounce: ReturnType<typeof setTimeout> | null = null;
     sourceEditor = createSourceEditor(pane, md, (content) => {
       if (syncingFromEditor) return;
@@ -500,7 +568,9 @@ function toggleSource() {
         syncingFromSource = false;
       }, 300);
     });
+    setupScrollSync();
   } else {
+    cleanupScrollSync();
     sourceEditor?.destroy();
     sourceEditor = null;
     pane.innerHTML = "";
@@ -509,6 +579,9 @@ function toggleSource() {
     if (vimBtn) {
       vimBtn.classList.add("hidden");
       vimBtn.classList.remove("active");
+    }
+    if (syncBtn) {
+      syncBtn.classList.add("hidden");
     }
   }
 }
