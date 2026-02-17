@@ -43,6 +43,9 @@ let docContext: {
 } | null = null;
 let editor: Editor;
 let ctrl: CommentController;
+let sourceVisible = false;
+let syncingFromSource = false;
+let syncingFromEditor = false;
 
 const appEl = document.getElementById("app")!;
 
@@ -367,7 +370,8 @@ function showEditorUI(markdown: string, fileName: string) {
   const saveControls = readOnly
     ? `<span class="readonly-badge">Read-only (${readOnlyReason})</span>
        ${isDefaultBranch ? `<button data-action="create-branch" class="toolbar-save">Create branch to edit</button>` : ""}`
-    : `<button data-action="save" title="Save (⌘S)" class="toolbar-save">Save</button>`;
+    : `<button data-action="toggle-source" title="Toggle markdown source" class="toolbar-toggle-source">MD</button>
+       <button data-action="save" title="Save (⌘S)" class="toolbar-save">Save</button>`;
 
   appEl.innerHTML = `
     <div id="toolbar">
@@ -383,6 +387,7 @@ function showEditorUI(markdown: string, fileName: string) {
     </div>
     <div id="main">
       <div id="editor-container"></div>
+      <textarea id="source-pane" class="source-pane hidden" spellcheck="false"></textarea>
       <div id="sidebar">${sidebarHtml()}</div>
     </div>
   `;
@@ -436,11 +441,57 @@ function showEditorUI(markdown: string, fileName: string) {
       case "suggest":
         ctrl.startSuggestion();
         break;
+      case "toggle-source":
+        toggleSource();
+        break;
       case "save":
         save();
         break;
     }
   });
+  // Sync WYSIWYG → source pane
+  editor.on("update", () => {
+    if (syncingFromSource) return;
+    const sourcePaneEl = document.getElementById("source-pane") as HTMLTextAreaElement | null;
+    if (!sourcePaneEl || sourcePaneEl.classList.contains("hidden")) return;
+    syncingFromEditor = true;
+    sourcePaneEl.value = (editor.storage as any).markdown.getMarkdown();
+    syncingFromEditor = false;
+  });
+}
+
+// ── Source Pane ───────────────────────────────────────────────────────
+
+let sourceDebounce: ReturnType<typeof setTimeout> | null = null;
+
+function toggleSource() {
+  const sourcePaneEl = document.getElementById("source-pane") as HTMLTextAreaElement;
+  const btn = document.querySelector('[data-action="toggle-source"]') as HTMLElement;
+  sourceVisible = !sourceVisible;
+
+  if (sourceVisible) {
+    sourcePaneEl.value = (editor.storage as any).markdown.getMarkdown();
+    sourcePaneEl.classList.remove("hidden");
+    btn.classList.add("active");
+
+    sourcePaneEl.addEventListener("input", onSourceInput);
+  } else {
+    sourcePaneEl.classList.add("hidden");
+    btn.classList.remove("active");
+    sourcePaneEl.removeEventListener("input", onSourceInput);
+  }
+}
+
+function onSourceInput() {
+  if (syncingFromEditor) return;
+  if (sourceDebounce) clearTimeout(sourceDebounce);
+  sourceDebounce = setTimeout(() => {
+    const sourcePaneEl = document.getElementById("source-pane") as HTMLTextAreaElement;
+    syncingFromSource = true;
+    editor.commands.setContent(sourcePaneEl.value);
+    ctrl.applyCommentMarks();
+    syncingFromSource = false;
+  }, 300);
 }
 
 async function promptCreateBranch() {
