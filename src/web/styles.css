@@ -2,28 +2,28 @@
 
 :root {
   --bg: #ffffff;
-  --fg: #1a1a1a;
+  --fg: #1f2328;
   --bg-secondary: #f6f8fa;
-  --border: #d1d5db;
-  --border-light: #e5e7eb;
-  --text-muted: #6b7280;
+  --border: #d0d7de;
+  --border-light: #d8dee4;
+  --text-muted: #656d76;
   --link: #0969da;
-  --btn-bg: #2563eb;
+  --btn-bg: #1f883d;
   --btn-fg: #ffffff;
-  --btn-hover: #1d4ed8;
+  --btn-hover: #1a7f37;
   --input-bg: #ffffff;
-  --input-border: #d1d5db;
-  --code-bg: #f3f4f6;
-  --sidebar-bg: #f9fafb;
+  --input-border: #d0d7de;
+  --code-bg: #eff1f3;
+  --sidebar-bg: #f6f8fa;
   --comment-highlight: rgba(255, 212, 0, 0.2);
   --comment-border: rgba(255, 212, 0, 0.6);
   --suggestion-highlight: rgba(0, 200, 80, 0.12);
   --suggestion-border: rgba(0, 200, 80, 0.5);
   --diff-del-bg: rgba(255, 0, 0, 0.08);
-  --diff-del-fg: #dc2626;
+  --diff-del-fg: #cf222e;
   --diff-ins-bg: rgba(0, 200, 0, 0.08);
-  --diff-ins-fg: #16a34a;
-  --hover-bg: rgba(0, 0, 0, 0.04);
+  --diff-ins-fg: #1a7f37;
+  --hover-bg: rgba(208, 215, 222, 0.32);
   --flash-bg: rgba(255, 212, 0, 0.3);
 }
 
@@ -42,8 +42,10 @@
     --input-bg: #0d1117;
     --input-border: #30363d;
     --code-bg: #161b22;
-    --sidebar-bg: #0d1117;
-    --hover-bg: rgba(255, 255, 255, 0.04);
+    --sidebar-bg: #010409;
+    --diff-del-fg: #f85149;
+    --diff-ins-fg: #3fb950;
+    --hover-bg: rgba(177, 186, 196, 0.12);
     --flash-bg: rgba(255, 212, 0, 0.15);
   }
 }
@@ -55,7 +57,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
   background: var(--bg);
   color: var(--fg);
   height: 100vh;
@@ -359,9 +361,9 @@ body {
   line-height: 1.75;
 }
 
-.tiptap h1 { font-size: 2em; margin: 0.8em 0 0.4em; font-weight: 700; }
-.tiptap h2 { font-size: 1.5em; margin: 0.8em 0 0.4em; font-weight: 600; }
-.tiptap h3 { font-size: 1.2em; margin: 0.8em 0 0.4em; font-weight: 600; }
+.tiptap h1 { font-size: 2em; margin: 0.8em 0 0.4em; font-weight: 600; padding-bottom: 0.3em; border-bottom: 1px solid var(--border); }
+.tiptap h2 { font-size: 1.5em; margin: 0.8em 0 0.4em; font-weight: 600; padding-bottom: 0.3em; border-bottom: 1px solid var(--border); }
+.tiptap h3 { font-size: 1.25em; margin: 0.8em 0 0.4em; font-weight: 600; }
 .tiptap p { margin: 0.5em 0; }
 .tiptap ul, .tiptap ol { padding-left: 1.5em; margin: 0.5em 0; }
 .tiptap li { margin: 0.2em 0; }
@@ -739,36 +741,37 @@ mark.comment-mark.suggestion {
   border-left-color: var(--fg);
 }
 
-/* Syntax highlighting — light mode */
-.source-pane .tok-keyword { color: #708; }
-.source-pane .tok-comment { color: #940; font-style: italic; }
-.source-pane .tok-string, .source-pane .tok-deleted { color: #a11; }
-.source-pane .tok-literal, .source-pane .tok-inserted { color: #164; }
+/* Syntax highlighting — GitHub Light */
+.source-pane .tok-keyword { color: #cf222e; }
+.source-pane .tok-comment { color: #6e7781; font-style: italic; }
+.source-pane .tok-string, .source-pane .tok-deleted { color: #0a3069; }
+.source-pane .tok-literal, .source-pane .tok-inserted { color: #0550ae; }
 .source-pane .tok-atom, .source-pane .tok-bool,
-.source-pane .tok-labelName, .source-pane .tok-contentSeparator { color: #219; }
-.source-pane .tok-variableName { color: #05a; }
-.source-pane .tok-typeName, .source-pane .tok-namespace { color: #085; }
-.source-pane .tok-className { color: #167; }
-.source-pane .tok-meta { color: #404740; }
-.source-pane .tok-heading { font-weight: bold; color: var(--fg); }
+.source-pane .tok-labelName, .source-pane .tok-contentSeparator { color: #0550ae; }
+.source-pane .tok-variableName { color: #953800; }
+.source-pane .tok-typeName, .source-pane .tok-namespace { color: #953800; }
+.source-pane .tok-className { color: #953800; }
+.source-pane .tok-meta { color: #6e7781; }
+.source-pane .tok-heading { font-weight: bold; color: #0550ae; }
 .source-pane .tok-emphasis { font-style: italic; }
 .source-pane .tok-strong { font-weight: bold; }
 .source-pane .tok-link { color: var(--link); text-decoration: underline; }
 .source-pane .tok-url { color: var(--link); }
-.source-pane .tok-invalid { color: #f00; }
+.source-pane .tok-invalid { color: #cf222e; }
 
+/* Syntax highlighting — GitHub Dark */
 @media (prefers-color-scheme: dark) {
-  .source-pane .tok-keyword { color: #c678dd; }
-  .source-pane .tok-comment { color: #7f848e; }
-  .source-pane .tok-string, .source-pane .tok-deleted { color: #e06c75; }
-  .source-pane .tok-literal, .source-pane .tok-inserted { color: #98c379; }
+  .source-pane .tok-keyword { color: #ff7b72; }
+  .source-pane .tok-comment { color: #8b949e; }
+  .source-pane .tok-string, .source-pane .tok-deleted { color: #a5d6ff; }
+  .source-pane .tok-literal, .source-pane .tok-inserted { color: #79c0ff; }
   .source-pane .tok-atom, .source-pane .tok-bool,
-  .source-pane .tok-labelName, .source-pane .tok-contentSeparator { color: #d19a66; }
-  .source-pane .tok-variableName { color: #e06c75; }
-  .source-pane .tok-typeName, .source-pane .tok-namespace { color: #e5c07b; }
-  .source-pane .tok-className { color: #e5c07b; }
+  .source-pane .tok-labelName, .source-pane .tok-contentSeparator { color: #79c0ff; }
+  .source-pane .tok-variableName { color: #ffa657; }
+  .source-pane .tok-typeName, .source-pane .tok-namespace { color: #ffa657; }
+  .source-pane .tok-className { color: #ffa657; }
   .source-pane .tok-meta { color: #8b949e; }
-  .source-pane .tok-heading { color: #e6edf3; }
+  .source-pane .tok-heading { color: #79c0ff; }
 }
 
 .source-pane .cm-vim-panel {
