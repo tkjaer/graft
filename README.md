@@ -4,10 +4,11 @@ A rich editor for markdown files that live in GitHub. Inline comments on text ra
 
 **[Try the web app →](https://tkjaer.github.io/graft/)**
 
+Sign in with GitHub, then install the [Graft GitHub App](https://github.com/apps/graft-editor) on the repos you want to edit. The app needs Contents read & write access to commit changes and store comments.
+
 <img width="2356" height="1568" alt="Web app screenshot" src="https://github.com/user-attachments/assets/aafa3a55-fadb-4e78-a42c-5c4f898c8547" />
 
 <img width="2360" height="1432" alt="VSCode app screenshot" src="https://github.com/user-attachments/assets/e03fd1eb-ebc1-4274-a79e-ebe8334b2c18" />
-
 
 Built for teams that already collaborate in a repo. Everyone who can push a branch can edit and comment.
 
