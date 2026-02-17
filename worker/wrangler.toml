@@ -1,0 +1,9 @@
+name = "graft-auth-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+[vars]
+ALLOWED_ORIGIN = "https://tkjaer.github.io"
+# GITHUB_CLIENT_ID is set via `wrangler secret put GITHUB_CLIENT_ID`
+# or as a plain var here if you prefer (it's not secret):
+# GITHUB_CLIENT_ID = "your-client-id"

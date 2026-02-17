@@ -2,15 +2,19 @@
  * GitHub Device Flow authentication.
  * No client secret required — runs entirely in the browser.
  *
+ * OAuth requests are routed through a CORS proxy (Cloudflare Worker)
+ * because github.com/login/* endpoints don't send CORS headers.
+ *
  * Flow:
- * 1. POST to /login/device/code with client_id → get user_code + verification_uri
+ * 1. POST to proxy /login/device/code with client_id → get user_code + verification_uri
  * 2. User opens verification_uri and enters user_code
- * 3. Poll POST /login/oauth/access_token until user approves
+ * 3. Poll POST proxy /login/oauth/access_token until user approves
  * 4. Store token in sessionStorage
  */
 
 const STORAGE_KEY = "graft:github_token";
 const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID ?? "";
+const AUTH_PROXY_URL = import.meta.env.VITE_AUTH_PROXY_URL ?? "";
 
 export interface DeviceCodeResponse {
   device_code: string;
@@ -66,8 +70,13 @@ export async function requestDeviceCode(): Promise<DeviceCodeResponse> {
       "VITE_GITHUB_CLIENT_ID is not set. Create a GitHub App and set this env var.",
     );
   }
+  if (!AUTH_PROXY_URL) {
+    throw new Error(
+      "VITE_AUTH_PROXY_URL is not set. Deploy the worker/ CORS proxy and set this env var.",
+    );
+  }
 
-  const res = await fetch("https://github.com/login/device/code", {
+  const res = await fetch(`${AUTH_PROXY_URL}/login/device/code`, {
     method: "POST",
     headers: {
       Accept: "application/json",
@@ -104,7 +113,7 @@ export async function pollForToken(
     await sleep(pollInterval);
     onTick?.();
 
-    const res = await fetch("https://github.com/login/oauth/access_token", {
+    const res = await fetch(`${AUTH_PROXY_URL}/login/oauth/access_token`, {
       method: "POST",
       headers: {
         Accept: "application/json",

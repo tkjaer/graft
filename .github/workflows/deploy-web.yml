@@ -30,6 +30,7 @@ jobs:
       - run: npm run build:web
         env:
           VITE_GITHUB_CLIENT_ID: ${{ vars.GRAFT_CLIENT_ID }}
+          VITE_AUTH_PROXY_URL: ${{ vars.GRAFT_AUTH_PROXY_URL }}
 
       - uses: actions/upload-pages-artifact@v3
         with:
