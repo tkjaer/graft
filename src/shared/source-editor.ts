@@ -1,5 +1,5 @@
 /**
- * CodeMirror-based markdown source editor with vim bindings.
+ * CodeMirror-based markdown source editor with optional vim bindings.
  * Used as the "source pane" alongside the Tiptap WYSIWYG editor.
  */
 
@@ -12,14 +12,16 @@ import { vim } from "@replit/codemirror-vim";
 
 export interface SourceEditor {
   view: EditorView;
+  vimEnabled: boolean;
+  toggleVim(): boolean;
   setContent(text: string): void;
   getContent(): string;
   destroy(): void;
 }
 
 /**
- * Create a CodeMirror editor with vim bindings, line numbers,
- * and markdown syntax highlighting.
+ * Create a CodeMirror editor with line numbers,
+ * markdown syntax highlighting, and optional vim bindings.
  */
 export function createSourceEditor(
   parent: HTMLElement,
@@ -27,13 +29,14 @@ export function createSourceEditor(
   onChange: (content: string) => void,
 ): SourceEditor {
   const vimMode = new Compartment();
+  let vimEnabled = false;
 
   const view = new EditorView({
     parent,
     state: EditorState.create({
       doc: initialContent,
       extensions: [
-        vimMode.of(vim()),
+        vimMode.of([]),
         lineNumbers(),
         highlightActiveLine(),
         drawSelection(),
@@ -71,6 +74,17 @@ export function createSourceEditor(
 
   return {
     view,
+    get vimEnabled() {
+      return vimEnabled;
+    },
+    toggleVim() {
+      vimEnabled = !vimEnabled;
+      view.dispatch({
+        effects: vimMode.reconfigure(vimEnabled ? vim() : []),
+      });
+      view.focus();
+      return vimEnabled;
+    },
     setContent(text: string) {
       const current = view.state.doc.toString();
       if (current !== text) {

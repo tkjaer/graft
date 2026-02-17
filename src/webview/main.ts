@@ -57,6 +57,7 @@ document.getElementById("app")!.innerHTML = `
     </div>
     <div class="toolbar-group toolbar-right">
       <button data-action="toggle-source" title="Toggle markdown source" class="toolbar-toggle-source">MD</button>
+      <button data-action="toggle-vim" title="Toggle vim mode" class="toolbar-toggle-source hidden" id="vim-toggle">VIM</button>
       <button data-action="save" title="Save (⌘S)" class="toolbar-save">Save</button>
     </div>
   </div>
@@ -115,15 +116,24 @@ function stripCommentMarks(md: string): string {
   return md.replace(/<mark[^>]*data-comment-id[^>]*>/g, "").replace(/<\/mark>/g, "");
 }
 
+function toggleVim() {
+  if (!sourceEditor) return;
+  const active = sourceEditor.toggleVim();
+  const btn = document.getElementById("vim-toggle");
+  if (btn) btn.classList.toggle("active", active);
+}
+
 function toggleSource() {
   const pane = document.getElementById("source-pane")!;
   const btn = document.querySelector('[data-action="toggle-source"]') as HTMLElement;
+  const vimBtn = document.getElementById("vim-toggle");
   sourceVisible = !sourceVisible;
 
   if (sourceVisible) {
     const md = stripCommentMarks((editor.storage as any).markdown.getMarkdown());
     pane.classList.remove("hidden");
     btn.classList.add("active");
+    vimBtn?.classList.remove("hidden");
     let debounce: ReturnType<typeof setTimeout> | null = null;
     sourceEditor = createSourceEditor(pane, md, (content) => {
       if (syncingFromEditor) return;
@@ -141,6 +151,10 @@ function toggleSource() {
     pane.innerHTML = "";
     pane.classList.add("hidden");
     btn.classList.remove("active");
+    if (vimBtn) {
+      vimBtn.classList.add("hidden");
+      vimBtn.classList.remove("active");
+    }
   }
 }
 
@@ -162,6 +176,9 @@ document.getElementById("toolbar")!.addEventListener("click", (e) => {
       break;
     case "toggle-source":
       toggleSource();
+      break;
+    case "toggle-vim":
+      toggleVim();
       break;
     case "save":
       save();
