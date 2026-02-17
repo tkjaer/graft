@@ -1,6 +1,8 @@
 # Graft
 
-A rich editor for markdown files that live in GitHub. Inline comments on text ranges, change suggestions — no server, no database, just GitHub.
+A rich editor for markdown files that live in GitHub. Inline comments on text ranges, change suggestions — no database, just GitHub.
+
+**[Try the web app →](https://tkjaer.github.io/graft/)**
 
 <img width="2360" height="1432" alt="Screenshot 2026-02-17 at 12 50 57" src="https://github.com/user-attachments/assets/e4aa35c1-61ac-4e42-b360-76a75f0621f4" />
 
@@ -29,18 +31,13 @@ Works as a **VS Code extension** or a **static web app** on GitHub Pages.
 
 **Default branch is read-only.** You can't accidentally edit `main`. The editor prompts you to create a feature branch, then switches to it.
 
-**No backend at all.** The VS Code extension talks to GitHub from Node. The web app talks to GitHub from the browser. Both are fully client-side.
+**No database, no heavyweight backend.** The VS Code extension talks to GitHub from Node. The web app talks to GitHub from the browser via a tiny [CORS proxy](worker/) on Cloudflare Workers (needed because GitHub's OAuth endpoints don't support CORS). Everything else is direct.
 
 ## Running it
 
-VS Code extension:
 ```
 npm install && npm run build
 # F5 → "Graft: Open Document" → paste a GitHub URL
 ```
 
-Web app:
-```
-cp .env.example .env  # set VITE_GITHUB_CLIENT_ID
-npm run dev:web
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for web app and CORS proxy setup.
