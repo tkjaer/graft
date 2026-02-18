@@ -1,6 +1,7 @@
 import { Editor, Mark, mergeAttributes } from "@tiptap/core";
 import type { DocComment, TextAnchor } from "../types";
 import { createAnchorFromText, resolveAnchorInText } from "./anchoring";
+import type * as Y from "yjs";
 
 // ── Comment Mark Extension ───────────────────────────────────────────
 
@@ -46,7 +47,87 @@ export class CommentController {
     to: number;
   } | null = null;
 
+  /** Optional Y.Map for collaborative comment storage */
+  private yComments: Y.Map<any> | null = null;
+  private yObserverCleanup: (() => void) | null = null;
+
   constructor(public editor: Editor) {}
+
+  /**
+   * Bind to a Y.Map for collaborative comment sync.
+   * Comments in Y.Map are the source of truth — local `comments` array
+   * is derived from it. Observe handler re-renders sidebar on remote changes.
+   */
+  bindYMap(commentsMap: Y.Map<any>): void {
+    this.unbindYMap();
+    this.yComments = commentsMap;
+
+    // Sync existing Y.Map entries into local array
+    this.syncFromYMap();
+    this.applyCommentMarks();
+    this.renderSidebar();
+
+    // Observe changes from remote users
+    const handler = () => {
+      this.syncFromYMap();
+      this.applyCommentMarks();
+      this.renderSidebar();
+    };
+    commentsMap.observe(handler);
+    this.yObserverCleanup = () => commentsMap.unobserve(handler);
+  }
+
+  /** Disconnect from Y.Map. */
+  unbindYMap(): void {
+    this.yObserverCleanup?.();
+    this.yObserverCleanup = null;
+    this.yComments = null;
+  }
+
+  /** Pull comments from Y.Map into local array. */
+  private syncFromYMap(): void {
+    if (!this.yComments) return;
+    const comments: DocComment[] = [];
+    this.yComments.forEach((value, key) => {
+      if (value && typeof value === "object" && value.id) {
+        comments.push(value as DocComment);
+      }
+    });
+    // Sort by creation time for stable ordering
+    comments.sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+    this.comments = comments;
+  }
+
+  /** Write a comment to Y.Map (if bound) or local array. */
+  private putComment(comment: DocComment): void {
+    if (this.yComments) {
+      this.yComments.set(comment.id, { ...comment });
+    } else {
+      const idx = this.comments.findIndex((c) => c.id === comment.id);
+      if (idx >= 0) {
+        this.comments[idx] = comment;
+      } else {
+        this.comments.push(comment);
+      }
+    }
+  }
+
+  /** Remove a comment from Y.Map (if bound) or local array. */
+  private removeComment(id: string): void {
+    if (this.yComments) {
+      this.yComments.delete(id);
+    } else {
+      this.comments = this.comments.filter((c) => c.id !== id);
+    }
+  }
+
+  /** Get a comment by ID. */
+  private getComment(id: string): DocComment | undefined {
+    return this.comments.find((c) => c.id === id);
+  }
 
   // ── Comment creation ─────────────────────────────────────────────
 
@@ -143,8 +224,11 @@ export class CommentController {
     );
     this.editor.view.dispatch(tr);
 
-    this.comments.push(comment);
-    this.renderSidebar();
+    this.putComment(comment);
+    if (!this.yComments) {
+      // In non-collab mode, render immediately
+      this.renderSidebar();
+    }
 
     document.getElementById("comment-form")!.classList.add("hidden");
     this.pendingAction = null;
@@ -256,31 +340,33 @@ export class CommentController {
   // ── Comment actions ──────────────────────────────────────────────
 
   resolveComment(id: string) {
-    const c = this.comments.find((x) => x.id === id);
+    const c = this.getComment(id);
     if (c) {
-      c.resolved = true;
+      const updated = { ...c, resolved: true };
       this.removeCommentMark(id);
-      this.renderSidebar();
+      this.putComment(updated);
+      if (!this.yComments) this.renderSidebar();
     }
   }
 
   unresolveComment(id: string) {
-    const c = this.comments.find((x) => x.id === id);
+    const c = this.getComment(id);
     if (c) {
-      c.resolved = false;
-      this.reapplyCommentMark(c);
-      this.renderSidebar();
+      const updated = { ...c, resolved: false };
+      this.putComment(updated);
+      this.reapplyCommentMark(updated);
+      if (!this.yComments) this.renderSidebar();
     }
   }
 
   deleteComment(id: string) {
-    this.comments = this.comments.filter((c) => c.id !== id);
+    this.removeComment(id);
     this.removeCommentMark(id);
-    this.renderSidebar();
+    if (!this.yComments) this.renderSidebar();
   }
 
   acceptSuggestion(id: string) {
-    const c = this.comments.find((x) => x.id === id);
+    const c = this.getComment(id);
     if (!c || c.type !== "suggestion" || !c.replacement) return;
 
     const range = this.findCommentMarkRange(id);
@@ -295,8 +381,9 @@ export class CommentController {
       this.editor.view.dispatch(tr);
     }
 
-    c.resolved = true;
-    this.renderSidebar();
+    const updated = { ...c, resolved: true };
+    this.putComment(updated);
+    if (!this.yComments) this.renderSidebar();
   }
 
   private toggleReplyForm(id: string) {
@@ -311,15 +398,22 @@ export class CommentController {
     const body = textarea.value.trim();
     if (!body) return;
 
-    const c = this.comments.find((x) => x.id === id);
+    const c = this.getComment(id);
     if (c) {
-      c.replies.push({
-        id: generateId(),
-        body,
-        author: this.currentUser,
-        createdAt: new Date().toISOString(),
-      });
-      this.renderSidebar();
+      const updated = {
+        ...c,
+        replies: [
+          ...c.replies,
+          {
+            id: generateId(),
+            body,
+            author: this.currentUser,
+            createdAt: new Date().toISOString(),
+          },
+        ],
+      };
+      this.putComment(updated);
+      if (!this.yComments) this.renderSidebar();
     }
   }
 

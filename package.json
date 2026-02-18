@@ -41,6 +41,8 @@
     "@octokit/rest": "^21.0.0",
     "@replit/codemirror-vim": "^6.3.0",
     "@tiptap/core": "^2.10.0",
+    "@tiptap/extension-collaboration": "^2.27.2",
+    "@tiptap/extension-collaboration-cursor": "^2.27.2",
     "@tiptap/extension-image": "^2.10.0",
     "@tiptap/extension-link": "^2.10.0",
     "@tiptap/extension-table": "^2.10.0",
@@ -50,7 +52,10 @@
     "@tiptap/pm": "^2.10.0",
     "@tiptap/starter-kit": "^2.10.0",
     "codemirror": "^6.0.2",
-    "tiptap-markdown": "^0.8.0"
+    "tiptap-markdown": "^0.8.0",
+    "y-protocols": "^1.0.7",
+    "y-websocket": "^3.0.0",
+    "yjs": "^13.6.29"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

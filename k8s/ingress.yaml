@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: graft-sync-server
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$arg_room"
+    nginx.ingress.kubernetes.io/websocket-services: "graft-sync-server"
+spec:
+  rules:
+    - host: graft-sync.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: graft-sync-server
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - graft-sync.example.com
+      secretName: graft-sync-tls

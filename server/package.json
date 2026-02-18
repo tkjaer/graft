@@ -1,0 +1,29 @@
+{
+  "name": "@graft/sync-server",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Graft real-time sync server — y-websocket with GitHub persistence",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@octokit/rest": "^21.0.0",
+    "diff-match-patch": "^1.0.5",
+    "ioredis": "^5.4.0",
+    "node-diff3": "^3.1.2",
+    "ws": "^8.18.0",
+    "y-protocols": "^1.0.6",
+    "yjs": "^13.6.0"
+  },
+  "devDependencies": {
+    "@types/diff-match-patch": "^1.0.36",
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  }
+}

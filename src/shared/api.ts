@@ -3,6 +3,18 @@ import type { DocComment } from "../types";
 
 const COMMENTS_BRANCH = "graft-comments";
 
+function timeAgoShort(date: string): string {
+  if (!date) return "";
+  const seconds = Math.floor(
+    (Date.now() - new Date(date).getTime()) / 1000,
+  );
+  if (seconds < 60) return "just now";
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+  return new Date(date).toLocaleDateString();
+}
+
 /** Runtime check that a parsed JSON value looks like a DocComment. */
 function isValidComment(c: unknown): c is DocComment {
   if (typeof c !== "object" || c === null) return false;
@@ -141,16 +153,54 @@ export abstract class BaseGitHubApi {
     branch: string,
   ): Promise<{ sha: string }> {
     const ok = await this.getOctokit();
-    const { data } = await ok.repos.createOrUpdateFileContents({
+    const params: Record<string, unknown> = {
       owner,
       repo,
       path,
       message,
-      content: this.encodeContent(content),
-      sha,
+      content: sha
+        ? this.encodeContent(content)
+        : this.encodeContent(content),
       branch,
-    });
+    };
+    // Only include SHA for updates, not new files
+    if (sha) {
+      params.sha = sha;
+    }
+    const { data } = await ok.repos.createOrUpdateFileContents(params as any);
     return { sha: data.content?.sha ?? sha };
+  }
+
+  /**
+   * Upload a binary file (base64-encoded content) to the repo.
+   * Used for image uploads where content is already base64.
+   */
+  async uploadBinaryFile(
+    owner: string,
+    repo: string,
+    path: string,
+    base64Content: string,
+    message: string,
+    branch: string,
+  ): Promise<{ sha: string }> {
+    const ok = await this.getOctokit();
+    try {
+      const { data } = await ok.repos.createOrUpdateFileContents({
+        owner,
+        repo,
+        path,
+        message,
+        content: base64Content,
+        branch,
+      });
+      return { sha: data.content?.sha ?? "" };
+    } catch (err: any) {
+      if (err.status === 422) {
+        // File already exists (content-addressed, so this is fine)
+        return { sha: "" };
+      }
+      throw err;
+    }
   }
 
   // ── PR ───────────────────────────────────────────────────────────
@@ -194,6 +244,64 @@ export abstract class BaseGitHubApi {
     const ok = await this.getOctokit();
     const { data } = await ok.users.getAuthenticated();
     return { login: data.login };
+  }
+
+  // ── File History ─────────────────────────────────────────────────
+
+  async getFileCommits(
+    owner: string,
+    repo: string,
+    branch: string,
+    filePath: string,
+    page = 1,
+    perPage = 30,
+  ): Promise<
+    Array<{
+      sha: string;
+      shortSha: string;
+      message: string;
+      author: string;
+      date: string;
+      isoDate: string;
+    }>
+  > {
+    const ok = await this.getOctokit();
+    const { data } = await ok.repos.listCommits({
+      owner,
+      repo,
+      sha: branch,
+      path: filePath,
+      page,
+      per_page: perPage,
+    });
+    return data.map((c) => ({
+      sha: c.sha,
+      shortSha: c.sha.substring(0, 7),
+      message: c.commit.message.split("\n")[0],
+      author: c.author?.login || c.commit.author?.name || "unknown",
+      date: timeAgoShort(c.commit.author?.date || ""),
+      isoDate: c.commit.author?.date || "",
+    }));
+  }
+
+  // ── Repo Collaborators ──────────────────────────────────────────
+
+  async getCollaborators(
+    owner: string,
+    repo: string,
+  ): Promise<Array<{ login: string }>> {
+    const ok = await this.getOctokit();
+    try {
+      const { data } = await ok.repos.listCollaborators({
+        owner,
+        repo,
+        per_page: 100,
+      });
+      return data.map((c) => ({ login: c.login }));
+    } catch {
+      // Might not have permission to list collaborators
+      return [];
+    }
   }
 
   // ── Comments (orphan branch) ─────────────────────────────────────

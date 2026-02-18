@@ -1,0 +1,19 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: graft-sync-server
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: graft-sync-server
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Pods
+      pods:
+        metric:
+          name: websocket_connections
+        target:
+          type: AverageValue
+          averageValue: "250"

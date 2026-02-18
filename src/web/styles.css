@@ -835,3 +835,303 @@ mark.comment-mark.suggestion {
 .hidden {
   display: none !important;
 }
+
+/* ── Collaboration UI ───────────────────────────────────────────────── */
+
+.connection-badge {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+.connection-badge.connected {
+  display: none;
+}
+
+.connection-badge.connecting {
+  background: var(--comment-highlight);
+  color: var(--fg);
+}
+
+.connection-badge.disconnected {
+  background: rgba(255, 0, 0, 0.1);
+  color: var(--diff-del-fg);
+}
+
+.presence-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 8px;
+}
+
+.presence-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: default;
+}
+
+.presence-extra {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+
+/* Remote cursor labels */
+.collaboration-cursor__caret {
+  border-left: 2px solid;
+  margin-left: -1px;
+  margin-right: -1px;
+  pointer-events: none;
+  position: relative;
+  word-break: normal;
+}
+
+.collaboration-cursor__label {
+  border-radius: 3px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  left: -1px;
+  line-height: 1;
+  padding: 1px 4px;
+  position: absolute;
+  top: -1.4em;
+  user-select: none;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Toast notifications */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--fg);
+  color: var(--bg);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── Suggesting Mode Marks ─────────────────────────────────────────── */
+
+.suggestion-insert {
+  background: rgba(46, 160, 67, 0.15);
+  border-bottom: 2px solid rgba(46, 160, 67, 0.6);
+  color: inherit;
+  text-decoration: none;
+}
+
+.suggestion-delete {
+  background: rgba(248, 81, 73, 0.12);
+  color: var(--diff-del-fg, #cf222e);
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+#suggesting-toggle.active {
+  background: rgba(46, 160, 67, 0.15);
+  color: var(--diff-ins-fg, #1a7f37);
+  font-weight: 600;
+}
+
+/* ── History Panel ─────────────────────────────────────────────────── */
+
+.history-panel {
+  width: 280px;
+  min-width: 280px;
+  background: var(--sidebar-bg, #f6f8fa);
+  border-left: 1px solid var(--border, #d0d7de);
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.history-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.history-badge {
+  background: var(--link, #0969da);
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 6px;
+  font-weight: 600;
+}
+
+.history-loading,
+.history-empty {
+  font-size: 13px;
+  color: var(--text-muted, #656d76);
+  padding: 20px 0;
+  text-align: center;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.history-item {
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s;
+}
+
+.history-item:hover {
+  background: var(--hover-bg, rgba(208, 215, 222, 0.32));
+}
+
+.history-item.selected {
+  border-color: var(--link, #0969da);
+  background: rgba(9, 105, 218, 0.08);
+}
+
+.history-item.new-commit {
+  border-left: 3px solid var(--link, #0969da);
+}
+
+.history-item-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.history-author {
+  font-weight: 600;
+  color: var(--fg, #1f2328);
+}
+
+.history-date {
+  color: var(--text-muted, #656d76);
+}
+
+.history-message {
+  font-size: 13px;
+  color: var(--fg, #1f2328);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-sha {
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--text-muted, #656d76);
+  margin-top: 2px;
+}
+
+/* ── Diff Modal ────────────────────────────────────────────────────── */
+
+.diff-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.diff-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.diff-modal-content {
+  position: relative;
+  background: var(--bg, #fff);
+  border-radius: 12px;
+  width: 80%;
+  max-width: 900px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.diff-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border, #d0d7de);
+}
+
+.diff-modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.diff-modal-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.diff-modal-body {
+  overflow-y: auto;
+  padding: 16px 20px;
+  flex: 1;
+}
+
+.diff-output {
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.diff-line {
+  padding: 1px 8px;
+  border-radius: 3px;
+}
+
+.diff-line.add {
+  background: var(--diff-ins-bg, rgba(0, 200, 0, 0.08));
+  color: var(--diff-ins-fg, #1a7f37);
+}
+
+.diff-line.del {
+  background: var(--diff-del-bg, rgba(255, 0, 0, 0.08));
+  color: var(--diff-del-fg, #cf222e);
+}
+
+.diff-line.ctx {
+  color: var(--text-muted, #656d76);
+}

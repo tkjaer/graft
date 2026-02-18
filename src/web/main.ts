@@ -30,8 +30,33 @@ import {
   requestDeviceCode,
   pollForToken,
 } from "./auth";
+import {
+  createCollaborationProvider,
+  userColor,
+  getConnectedUsers,
+  type CollaborationProvider,
+} from "../shared/collaboration";
+import { ImageUpload } from "../shared/image-upload";
+import {
+  SuggestingMode,
+  setSuggestingUser,
+  isSuggestingModeActive,
+} from "../shared/suggesting";
+import { SlashCommands } from "../shared/slash-commands";
+import {
+  fetchFileHistory,
+  getLastViewed,
+  setLastViewed,
+  countNewCommits,
+  renderHistoryPanel,
+  simpleDiff,
+  type CommitEntry,
+} from "../shared/history";
 
 import "./styles.css";
+
+// Sync server URL — set via VITE_SYNC_SERVER_URL or fallback to localhost
+const SYNC_SERVER_URL = (import.meta as any).env?.VITE_SYNC_SERVER_URL || "ws://localhost:4000";
 
 // ── State ────────────────────────────────────────────────────────────
 
@@ -56,6 +81,10 @@ let sourceEditor: SourceEditor | null = null;
 let scrollSyncEnabled = true;
 let sidebarVisible = true;
 let scrollSyncCleanup: (() => void) | null = null;
+let collabProvider: CollaborationProvider | null = null;
+let connectionStatus: "connecting" | "connected" | "disconnected" = "disconnected";
+let historyCommits: CommitEntry[] = [];
+let historyPanelVisible = false;
 
 const appEl = document.getElementById("app")!;
 
@@ -347,6 +376,139 @@ async function loadEditor() {
   ctrl.comments = commentsData?.comments ?? [];
   ctrl.applyCommentMarks();
   ctrl.renderSidebar();
+
+  // Set up collaboration if sync server is available and not read-only
+  if (!readOnly) {
+    setupCollaboration();
+  }
+}
+
+function setupCollaboration() {
+  if (!docContext) return;
+  const token = getToken();
+  if (!token) return;
+
+  const { owner, repo, branch, filePath } = docContext;
+  const roomId = `${owner}/${repo}/${branch}/${filePath}`;
+
+  // Clean up previous provider
+  collabProvider?.destroy();
+
+  try {
+    collabProvider = createCollaborationProvider({
+      serverUrl: SYNC_SERVER_URL,
+      roomId,
+      token,
+      user: {
+        name: currentUser,
+        color: userColor(currentUser),
+      },
+      onStatusChange: (status) => {
+        connectionStatus = status;
+        updateConnectionBadge();
+        if (status === "connected") {
+          updatePresenceIndicator();
+        }
+      },
+      onExternalMerge: (message) => {
+        showToast(message);
+      },
+      onExternalConflict: (_theirs, _base) => {
+        showToast("External change conflicts with your edits — manual resolution needed");
+      },
+    });
+
+    // Update presence when awareness changes
+    collabProvider.awareness.on("change", () => {
+      updatePresenceIndicator();
+    });
+
+    // Bind comments to Y.Map for collaborative sync
+    const commentsMap = collabProvider.doc.getMap("comments");
+    ctrl.bindYMap(commentsMap);
+  } catch (err) {
+    console.warn("[graft] Could not connect to sync server, continuing in async mode", err);
+    connectionStatus = "disconnected";
+    updateConnectionBadge();
+  }
+}
+
+function updateConnectionBadge() {
+  let badge = document.getElementById("connection-badge");
+  if (!badge) {
+    const toolbar = document.querySelector(".toolbar-group");
+    if (!toolbar) return;
+    badge = document.createElement("span");
+    badge.id = "connection-badge";
+    badge.className = "connection-badge";
+    toolbar.appendChild(badge);
+  }
+
+  switch (connectionStatus) {
+    case "connected":
+      badge.textContent = "";
+      badge.className = "connection-badge connected";
+      badge.title = "Real-time sync active";
+      break;
+    case "connecting":
+      badge.textContent = "⟳";
+      badge.className = "connection-badge connecting";
+      badge.title = "Connecting to sync server…";
+      break;
+    case "disconnected":
+      badge.textContent = "Offline";
+      badge.className = "connection-badge disconnected";
+      badge.title = "Sync server unavailable — saving directly to GitHub";
+      break;
+  }
+}
+
+function updatePresenceIndicator() {
+  if (!collabProvider) return;
+
+  const users = getConnectedUsers(collabProvider.awareness);
+  let indicator = document.getElementById("presence-indicator");
+
+  if (!indicator) {
+    const toolbar = document.querySelector(".toolbar-right");
+    if (!toolbar) return;
+    indicator = document.createElement("span");
+    indicator.id = "presence-indicator";
+    indicator.className = "presence-indicator";
+    toolbar.prepend(indicator);
+  }
+
+  // Don't count self
+  const others = users.filter((u) => u.name !== currentUser);
+  if (others.length === 0) {
+    indicator.innerHTML = "";
+    indicator.title = "";
+    return;
+  }
+
+  const avatars = others
+    .slice(0, 5)
+    .map(
+      (u) =>
+        `<span class="presence-dot" style="background: ${u.color}" title="${esc(u.name)}">${esc(u.name[0].toUpperCase())}</span>`,
+    )
+    .join("");
+
+  const extra = others.length > 5 ? `<span class="presence-extra">+${others.length - 5}</span>` : "";
+  indicator.innerHTML = avatars + extra;
+  indicator.title = others.map((u) => u.name).join(", ");
+}
+
+function showToast(message: string) {
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add("show"), 10);
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
 }
 
 function showEditorUI(markdown: string, fileName: string) {
@@ -378,6 +540,10 @@ function showEditorUI(markdown: string, fileName: string) {
       <div class="toolbar-group">
         <button data-action="comment" title="Add Comment" class="toolbar-action">💬</button>
         <button data-action="suggest" title="Suggest Change" class="toolbar-action">✏️</button>
+      </div>
+      <div class="toolbar-sep"></div>
+      <div class="toolbar-group">
+        <button data-action="toggle-suggesting" title="Toggle Suggesting Mode" class="toolbar-toggle-source" id="suggesting-toggle">Suggest</button>
       </div>`;
 
   const isDefaultBranch = readOnly && !docContext?.contentRef;
@@ -393,6 +559,7 @@ function showEditorUI(markdown: string, fileName: string) {
        <button data-action="toggle-vim" title="Toggle vim mode" class="toolbar-toggle-source hidden" id="vim-toggle">VIM</button>
        <button data-action="toggle-scroll-sync" title="Toggle scroll sync" class="toolbar-toggle-source hidden active" id="sync-toggle">SYNC</button>
        <button data-action="toggle-sidebar" title="Toggle comments" class="toolbar-toggle-source active" id="sidebar-toggle">💬</button>
+       <button data-action="toggle-history" title="Version history" class="toolbar-toggle-source" id="history-toggle">📋</button>
        ${themePickerHtml()}
        <button data-action="save" title="Save (⌘S)" class="toolbar-save">Save</button>`;
 
@@ -412,6 +579,7 @@ function showEditorUI(markdown: string, fileName: string) {
       <div id="editor-container"></div>
       <div id="source-pane" class="source-pane hidden"></div>
       <div id="sidebar">${sidebarHtml()}</div>
+      <div id="history-panel" class="history-panel hidden"></div>
     </div>
   `;
 
@@ -431,6 +599,43 @@ function showEditorUI(markdown: string, fileName: string) {
         tightLists: true,
         bulletListMarker: "-",
       }),
+      ...(!readOnly && docContext
+        ? [
+            ImageUpload.configure({
+              upload: async (file: File, fileName: string) => {
+                const { owner, repo, branch, filePath } = docContext!;
+                const docDir = filePath.includes("/")
+                  ? filePath.substring(0, filePath.lastIndexOf("/"))
+                  : "";
+                const assetsDir = docDir ? `${docDir}/assets` : "assets";
+                const uploadPath = `${assetsDir}/${fileName}`;
+
+                // Read file as base64
+                const buffer = await file.arrayBuffer();
+                const bytes = new Uint8Array(buffer);
+                let binary = "";
+                for (let i = 0; i < bytes.length; i++) {
+                  binary += String.fromCharCode(bytes[i]);
+                }
+                const base64 = btoa(binary);
+
+                await api!.uploadBinaryFile(
+                  owner,
+                  repo,
+                  uploadPath,
+                  base64,
+                  `Add image ${fileName} via Graft`,
+                  branch,
+                );
+                return `assets/${fileName}`;
+              },
+              onUploadStart: () => showToast("Uploading image…"),
+              onUploadEnd: () => showToast("Image uploaded ✓"),
+            }),
+            SuggestingMode,
+            SlashCommands,
+          ]
+        : []),
     ],
     content: markdown,
     editable: !readOnly,
@@ -442,6 +647,7 @@ function showEditorUI(markdown: string, fileName: string) {
   ctrl.readOnly = readOnly;
   ctrl.bindMarkClickHandler();
   ctrl.bindFormHandlers();
+  setSuggestingUser(currentUser);
   bindThemePicker();
 
   document.getElementById("toolbar")!.addEventListener("click", (e) => {
@@ -476,6 +682,12 @@ function showEditorUI(markdown: string, fileName: string) {
         break;
       case "toggle-sidebar":
         toggleSidebar();
+        break;
+      case "toggle-suggesting":
+        toggleSuggestingMode();
+        break;
+      case "toggle-history":
+        toggleHistoryPanel();
         break;
       case "save":
         save();
@@ -518,6 +730,124 @@ function toggleSidebar() {
   const btn = document.getElementById("sidebar-toggle");
   if (sidebar) sidebar.classList.toggle("hidden", !sidebarVisible);
   if (btn) btn.classList.toggle("active", sidebarVisible);
+}
+
+function toggleSuggestingMode() {
+  editor.commands.toggleSuggestingMode();
+  const btn = document.getElementById("suggesting-toggle");
+  if (btn) {
+    const active = isSuggestingModeActive();
+    btn.classList.toggle("active", active);
+    btn.title = active ? "Switch to Editing mode" : "Switch to Suggesting mode";
+  }
+}
+
+async function toggleHistoryPanel() {
+  historyPanelVisible = !historyPanelVisible;
+  const panel = document.getElementById("history-panel");
+  const btn = document.getElementById("history-toggle");
+  if (!panel) return;
+
+  if (historyPanelVisible) {
+    panel.classList.remove("hidden");
+    btn?.classList.add("active");
+    panel.innerHTML = '<div class="history-loading">Loading history…</div>';
+
+    if (docContext && api) {
+      try {
+        historyCommits = await fetchFileHistory(
+          api,
+          docContext.owner,
+          docContext.repo,
+          docContext.branch,
+          docContext.filePath,
+        );
+        const lastViewed = getLastViewed(
+          docContext.owner,
+          docContext.repo,
+          docContext.branch,
+          docContext.filePath,
+        );
+        const newCount = countNewCommits(historyCommits, lastViewed);
+        panel.innerHTML = renderHistoryPanel(historyCommits, newCount);
+
+        // Mark as viewed
+        if (historyCommits.length > 0) {
+          setLastViewed(
+            docContext.owner,
+            docContext.repo,
+            docContext.branch,
+            docContext.filePath,
+            historyCommits[0].sha,
+          );
+        }
+
+        // Bind click handlers
+        panel.querySelectorAll("[data-action='view-version']").forEach((el) => {
+          el.addEventListener("click", async () => {
+            const sha = (el as HTMLElement).dataset.sha;
+            if (!sha || !api || !docContext) return;
+            try {
+              const file = await api.getFileContent(
+                docContext.owner,
+                docContext.repo,
+                docContext.filePath,
+                sha,
+              );
+              // Show in a modal or replace editor content temporarily
+              const currentMd = ctrl.getCleanMarkdown();
+              const diffHtml = simpleDiff(file.content, currentMd);
+              showDiffModal(sha.substring(0, 7), diffHtml, file.content);
+            } catch (err: any) {
+              showToast(`Error loading version: ${err.message}`);
+            }
+          });
+        });
+      } catch (err: any) {
+        panel.innerHTML = `<div class="history-empty">Error: ${err.message}</div>`;
+      }
+    }
+  } else {
+    panel.classList.add("hidden");
+    btn?.classList.remove("active");
+  }
+}
+
+function showDiffModal(sha: string, diffHtml: string, oldContent: string) {
+  const existing = document.getElementById("diff-modal");
+  if (existing) existing.remove();
+
+  const modal = document.createElement("div");
+  modal.id = "diff-modal";
+  modal.className = "diff-modal";
+  modal.innerHTML = `
+    <div class="diff-modal-backdrop"></div>
+    <div class="diff-modal-content">
+      <div class="diff-modal-header">
+        <h3>Changes since ${sha}</h3>
+        <div class="diff-modal-actions">
+          <button id="diff-restore-btn" class="toolbar-save">Restore this version</button>
+          <button id="diff-close-btn" class="toolbar-toggle-source">Close</button>
+        </div>
+      </div>
+      <div class="diff-modal-body">
+        <pre class="diff-output">${diffHtml}</pre>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  document.getElementById("diff-close-btn")!.addEventListener("click", () => {
+    modal.remove();
+  });
+  document.getElementById("diff-restore-btn")!.addEventListener("click", () => {
+    editor.commands.setContent(oldContent);
+    modal.remove();
+    showToast("Restored to version " + sha);
+  });
+  modal.querySelector(".diff-modal-backdrop")!.addEventListener("click", () => {
+    modal.remove();
+  });
 }
 
 function setupScrollSync() {
