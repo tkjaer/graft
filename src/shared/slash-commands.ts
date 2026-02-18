@@ -254,7 +254,7 @@ function createDropdown(): HTMLElement {
   const el = document.createElement("div");
   el.className = "slash-commands-dropdown";
   el.style.cssText =
-    "position:fixed;z-index:9999;background:var(--bg-primary,#fff);border:1px solid var(--border-primary,#d0d7de);border-radius:8px;padding:4px;box-shadow:0 4px 12px rgba(0,0,0,.15);max-height:300px;overflow-y:auto;min-width:220px;";
+    "position:fixed;z-index:9999;background:var(--bg,var(--vscode-editor-background,#fff));color:var(--fg,var(--vscode-editor-foreground,#1f2328));border:1px solid var(--border,var(--vscode-editorWidget-border,#d0d7de));border-radius:8px;padding:4px;box-shadow:0 4px 12px rgba(0,0,0,.25);max-height:300px;overflow-y:auto;min-width:220px;";
   document.body.appendChild(el);
   return el;
 }
@@ -283,21 +283,43 @@ function showDropdown(view: EditorView, filter: string): void {
   dropdownEl.innerHTML = filteredCommands
     .map(
       (c, i) =>
-        `<div class="slash-cmd-item${i === activeIndex ? " active" : ""}" data-index="${i}" style="padding:6px 10px;cursor:pointer;border-radius:4px;display:flex;align-items:center;gap:8px;${i === activeIndex ? "background:var(--bg-tertiary,#f0f4f8);" : ""}">
-          <span style="width:28px;text-align:center;font-weight:600;opacity:.7;font-size:13px;">${c.icon}</span>
+        `<div class="slash-cmd-item${i === activeIndex ? " active" : ""}" data-index="${i}" style="padding:6px 10px;cursor:pointer;border-radius:4px;display:flex;align-items:center;gap:8px;${i === activeIndex ? "background:var(--hover-bg,var(--vscode-list-hoverBackground,rgba(128,128,128,.15)));" : ""}">
+          <span style="width:28px;text-align:center;font-weight:600;opacity:.7;font-size:13px;color:var(--text-muted,var(--vscode-descriptionForeground,#656d76));">${c.icon}</span>
           <div>
             <div style="font-size:14px;font-weight:500;">${c.title}</div>
-            <div style="font-size:12px;opacity:.6;">${c.description}</div>
+            <div style="font-size:12px;color:var(--text-muted,var(--vscode-descriptionForeground,#656d76));">${c.description}</div>
           </div>
         </div>`,
     )
     .join("");
 
-  // Position near cursor
+  // Position near cursor, clamped to viewport
   const coords = view.coordsAtPos(view.state.selection.from);
-  dropdownEl.style.left = `${coords.left}px`;
-  dropdownEl.style.top = `${coords.bottom + 4}px`;
+  let left = coords.left;
+  let top = coords.bottom + 4;
+
+  dropdownEl.style.left = "0px";
+  dropdownEl.style.top = "0px";
   dropdownEl.style.display = "block";
+
+  const rect = dropdownEl.getBoundingClientRect();
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  // Clamp horizontal: don't overflow right edge
+  if (left + rect.width > vw - 8) {
+    left = Math.max(8, vw - rect.width - 8);
+  }
+  // Clamp vertical: if it overflows bottom, show above the cursor instead
+  if (top + rect.height > vh - 8) {
+    top = coords.top - rect.height - 4;
+  }
+  // Final safety clamp
+  top = Math.max(8, top);
+  left = Math.max(8, left);
+
+  dropdownEl.style.left = `${left}px`;
+  dropdownEl.style.top = `${top}px`;
 
   // Click handler
   dropdownEl.querySelectorAll(".slash-cmd-item").forEach((item) => {
