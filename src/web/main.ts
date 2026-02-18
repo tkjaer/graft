@@ -1,7 +1,6 @@
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
-import Image from "@tiptap/extension-image";
 import Table from "@tiptap/extension-table";
 import TableRow from "@tiptap/extension-table-row";
 import TableCell from "@tiptap/extension-table-cell";
@@ -10,6 +9,7 @@ import { Markdown } from "tiptap-markdown";
 import { parseGitHubUrl } from "../shared/url";
 import { validateBranchName } from "../shared/validation";
 import {
+  BlockImage,
   CommentMark,
   CommentController,
   handleFormatAction,
@@ -588,7 +588,7 @@ function showEditorUI(markdown: string, fileName: string) {
     extensions: [
       StarterKit,
       Link.configure({ openOnClick: false }),
-      Image,
+      BlockImage,
       Table.configure({ resizable: false }),
       TableRow,
       TableCell,

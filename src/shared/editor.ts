@@ -1,7 +1,41 @@
-import { Editor, Mark, mergeAttributes } from "@tiptap/core";
+import { Editor, Mark, Node, mergeAttributes } from "@tiptap/core";
+import Image from "@tiptap/extension-image";
 import type { DocComment, TextAnchor } from "../types";
 import { createAnchorFromText, resolveAnchorInText } from "./anchoring";
 import type * as Y from "yjs";
+
+// ── Block Image Extension ────────────────────────────────────────────
+// The default tiptap-markdown image serializer uses prosemirror-markdown's
+// inline image serializer (state.write() without state.closeBlock()).
+// Since @tiptap/extension-image defaults to inline: false (block node),
+// the block boundary is lost during serialization, causing paragraph breaks
+// around images to disappear on round-trip. This extension adds a proper
+// block-level markdown serializer that calls state.closeBlock().
+
+export const BlockImage = Image.extend({
+  addStorage() {
+    return {
+      markdown: {
+        serialize(state: any, node: any) {
+          state.write(
+            "![" +
+              state.esc(node.attrs.alt || "") +
+              "](" +
+              node.attrs.src.replace(/[()]/g, "\\$&") +
+              (node.attrs.title
+                ? ' "' + node.attrs.title.replace(/"/g, '\\"') + '"'
+                : "") +
+              ")",
+          );
+          state.closeBlock(node);
+        },
+        parse: {
+          // handled by markdown-it
+        },
+      },
+    };
+  },
+});
 
 // ── Comment Mark Extension ───────────────────────────────────────────
 
