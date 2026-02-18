@@ -1,6 +1,6 @@
 # Graft
 
-A rich editor for markdown files that live in GitHub. Inline comments on text ranges, change suggestions — no database, just GitHub.
+A collaborative editor for markdown files that live in GitHub. Real-time multi-user editing, inline comments, change suggestions, version history — no database, just GitHub.
 
 **[Try the web app →](https://tkjaer.github.io/graft/)**
 
@@ -38,12 +38,18 @@ Works as a **VS Code extension** or a **static web app** on GitHub Pages.
 
 ## Features
 
+- **Real-time collaboration** — multiple users edit the same document simultaneously. Colored cursors show who's where. Presence indicators in the toolbar. Powered by Yjs CRDTs.
 - **WYSIWYG + source split view** — toggle a side-by-side markdown source pane (CodeMirror 6) next to the rich editor. Changes sync both ways in real time.
+- **Suggesting mode** — toggle between editing and suggesting. In suggesting mode, edits appear as tracked changes (green insertions, red deletions) that can be accepted or rejected individually.
+- **Inline comments and suggestions** — select text to leave a comment or propose a replacement. Comments anchor to text ranges, not line numbers.
+- **Slash commands** — type `/` to insert headings, lists, code blocks, tables, dividers, and blockquotes from a floating menu.
+- **Image upload** — drag-and-drop or paste images directly into the editor. Images are resized client-side if >1MB and committed to an `assets/` folder with content-hashed filenames.
+- **Version history** — browse the git log for the current file, view any version, and see a line-by-line diff against the current content. A "new commits" badge shows what changed since you last looked.
 - **Optional vim bindings** — enable vim mode in the source pane with one click. Preference is remembered across sessions.
 - **Scroll sync** — proportional scroll synchronization between the WYSIWYG and source panes (toggle on/off).
-- **Inline comments and suggestions** — select text to leave a comment or propose a replacement. Comments anchor to text ranges, not line numbers.
 - **Themes** — GitHub Light, GitHub Dark, GitHub Dark Dimmed, Dracula, and Solarized Light. Defaults to system preference. Persisted in localStorage.
 - **Read-only mode** — default branch and merged PRs open read-only. Create a branch from the editor to start editing.
+- **Offline fallback** — if the sync server is unavailable, the editor works in single-user mode with direct GitHub API saves (same as v1).
 
 ## The interesting bits
 
@@ -53,9 +59,50 @@ Works as a **VS Code extension** or a **static web app** on GitHub Pages.
 
 **Default branch is read-only.** You can't accidentally edit `main`. The editor prompts you to create a feature branch, then switches to it.
 
-**No database, no heavyweight backend.** The VS Code extension talks to GitHub from Node. The web app talks to GitHub from the browser via a tiny [CORS proxy](worker/) on Cloudflare Workers (needed because GitHub's OAuth endpoints don't support CORS). Everything else is direct.
+**No database, no heavyweight backend.** The VS Code extension talks to GitHub from Node. The web app talks to GitHub from the browser via a tiny [CORS proxy](worker/) on Cloudflare Workers (needed because GitHub's OAuth endpoints don't support CORS). The optional sync server handles real-time collaboration — without it, everything still works in single-user mode.
+
+## Architecture
+
+```
+┌─────────────┐                  ┌──────────────────────────┐
+│  Browsers   │◄──── wss:// ───►│  Sync server (optional)  │
+│             │                  │  y-websocket + GitHub     │
+└─────────────┘                  │  persistence hooks        │
+                                 └──────────┬───────────────┘
+       ┌──────────────┐                     │
+       │  VS Code ext │◄── wss:// ──────────┘
+       └──────────────┘                     │
+                                 ┌──────────▼───────────────┐
+                                 │   GitHub API             │
+                                 │   content + orphan branch│
+                                 └──────────────────────────┘
+```
+
+Without the sync server, clients talk directly to the GitHub API (single-user mode). With it, edits sync in real-time via Yjs CRDTs, and the server handles debounced saves to GitHub.
+
+See [docs/v2-design.md](docs/v2-design.md) for the full architecture and technical decisions.
 
 ## Running it
+
+### Web app (single-user mode — no sync server)
+
+```
+npm install && npm run dev:web
+```
+
+### Web app + real-time collaboration
+
+```
+# Start sync server + Redis
+docker compose up
+
+# In another terminal
+npm run dev:web
+```
+
+Set `VITE_SYNC_SERVER_URL=ws://localhost:4000` in `.env`.
+
+### VS Code extension
 
 ```
 npm install && npm run build
