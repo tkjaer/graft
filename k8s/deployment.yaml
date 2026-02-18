@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graft-sync-server
+  labels:
+    app: graft-sync-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: graft-sync-server
+  template:
+    metadata:
+      labels:
+        app: graft-sync-server
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: sync-server
+          image: graft-sync-server:latest
+          ports:
+            - containerPort: 4000
+          env:
+            - name: PORT
+              value: "4000"
+            - name: REDIS_URL
+              value: "redis://graft-redis:6379"
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: graft-secrets
+                  key: github-token
+            - name: GITHUB_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: graft-secrets
+                  key: webhook-secret
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 30

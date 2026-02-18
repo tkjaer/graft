@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: graft-sync-server
+spec:
+  selector:
+    app: graft-sync-server
+  ports:
+    - port: 80
+      targetPort: 4000
+      protocol: TCP
