@@ -4,6 +4,8 @@ A collaborative editor for markdown files that live in GitHub. Real-time multi-u
 
 **[Try the web app →](https://tkjaer.github.io/graft/)**
 
+> **Heads up:** I'm planning to retire the hosted web app and its Cloudflare sign-in proxy in favour of self-hosting. See [#18](https://github.com/tkjaer/graft/issues/18) for why and what changes.
+
 Sign in with GitHub, then install the [Graft GitHub App](https://github.com/apps/graft-editor) on the repos you want to edit. The app needs Contents read & write access to commit changes and store comments.
 
 The VS Code extension uses your existing GitHub sign-in — no app install needed.
