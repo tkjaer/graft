@@ -17,7 +17,9 @@ updates:
         applies-to: security-updates
         patterns: ["*"]
     ignore:
-      # 0.9 requires Tiptap v3; remove once we've migrated (#37)
+      # Tiptap v3 needs a coordinated migration; remove both once done (#37)
+      - dependency-name: "@tiptap/*"
+        update-types: ["version-update:semver-major"]
       - dependency-name: tiptap-markdown
         versions: [">=0.9.0"]
       # Must not be newer than engines.vscode, so bump both together by hand
