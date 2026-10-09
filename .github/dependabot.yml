@@ -17,6 +17,9 @@ updates:
         applies-to: security-updates
         patterns: ["*"]
     ignore:
+      # Keep in line with the Node version in CI and server/Dockerfile
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
       # Must not be newer than engines.vscode, so bump both together by hand
       - dependency-name: "@types/vscode"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]

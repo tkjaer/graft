@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js 24+
 - A [GitHub App](https://github.com/settings/apps/new) with **Device flow** enabled and **Contents** read & write permission
 - A [Cloudflare](https://dash.cloudflare.com/sign-up) account (free tier, for the OAuth CORS proxy)
 
