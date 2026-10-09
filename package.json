@@ -34,15 +34,15 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/lang-markdown": "^6.5.2",
     "@codemirror/language-data": "^6.5.2",
-    "@codemirror/state": "^6.5.4",
-    "@codemirror/view": "^6.39.14",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.13",
     "@octokit/rest": "^21.0.0",
-    "@replit/codemirror-vim": "^6.3.0",
+    "@replit/codemirror-vim": "^6.4.0",
     "@tiptap/core": "^2.10.0",
     "@tiptap/extension-collaboration": "^2.27.2",
-    "@tiptap/extension-collaboration-cursor": "^2.27.2",
+    "@tiptap/extension-collaboration-cursor": "^2.27.3",
     "@tiptap/extension-image": "^2.10.0",
     "@tiptap/extension-link": "^2.10.0",
     "@tiptap/extension-table": "^2.10.0",
@@ -54,14 +54,14 @@
     "codemirror": "^6.0.2",
     "tiptap-markdown": "^0.8.0",
     "y-protocols": "^1.0.7",
-    "y-websocket": "^3.0.0",
-    "yjs": "^13.6.29"
+    "y-websocket": "^3.1.0",
+    "yjs": "^13.6.33"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/vscode": "~1.105.0",
     "@vscode/vsce": "^3.0.0",
-    "esbuild": "^0.27.3",
+    "esbuild": "^0.28.2",
     "husky": "^9.1.7",
     "jsdom": "^28.1.0",
     "typescript": "^5.5.0",
