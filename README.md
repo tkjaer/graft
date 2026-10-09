@@ -110,3 +110,7 @@ npm install && npm run build
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for web app and CORS proxy setup.
+
+## License
+
+[MIT](LICENSE)
