@@ -8,7 +8,14 @@ updates:
       interval: weekly
     groups:
       minor-and-patch:
+        applies-to: version-updates
         update-types: [minor, patch]
+      major:
+        applies-to: version-updates
+        update-types: [major]
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
 
   - package-ecosystem: github-actions
     directory: "/"
@@ -16,4 +23,8 @@ updates:
       interval: weekly
     groups:
       actions:
+        applies-to: version-updates
+        patterns: ["*"]
+      actions-security:
+        applies-to: security-updates
         patterns: ["*"]
