@@ -1,10 +1,6 @@
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
-import Link from "@tiptap/extension-link";
-import Table from "@tiptap/extension-table";
-import TableRow from "@tiptap/extension-table-row";
-import TableCell from "@tiptap/extension-table-cell";
-import TableHeader from "@tiptap/extension-table-header";
+import { Table, TableRow, TableCell, TableHeader } from "@tiptap/extension-table";
 import { Markdown } from "tiptap-markdown";
 import {
   BlockImage,
@@ -77,8 +73,12 @@ document.getElementById("app")!.innerHTML = `
 const editor = new Editor({
   element: document.getElementById("editor-container")!,
   extensions: [
-    StarterKit,
-    Link.configure({ openOnClick: false }),
+    StarterKit.configure({
+      link: { openOnClick: false },
+      // New in StarterKit v3; disabled to keep the markdown output unchanged
+      underline: false,
+      trailingNode: false,
+    }),
     BlockImage,
     Table.configure({ resizable: false }),
     TableRow,

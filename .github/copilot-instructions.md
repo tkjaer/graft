@@ -158,7 +158,7 @@ vite.config.ts          — Vite config for web app build
 
 ## Tech stack
 
-- **Editor**: Tiptap v2 + ProseMirror (via `@tiptap/core`, `@tiptap/starter-kit`)
+- **Editor**: Tiptap v3 + ProseMirror (via `@tiptap/core`, `@tiptap/starter-kit`)
 - **Source pane**: CodeMirror 6 (`@codemirror/view`, `@codemirror/state`, `@codemirror/lang-markdown`)
 - **Vim bindings**: `@replit/codemirror-vim` (optional, runtime toggle via `Compartment`)
 - **Syntax highlighting**: `classHighlighter` from `@lezer/highlight` (CSS class–based)
