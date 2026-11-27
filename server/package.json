@@ -13,9 +13,9 @@
   "dependencies": {
     "@octokit/rest": "^22.0.1",
     "diff-match-patch": "^1.0.5",
-    "ioredis": "^6.0.0",
+    "ioredis": "^6.1.0",
     "node-diff3": "^3.2.1",
-    "ws": "^8.22.1",
+    "ws": "^8.23.0",
     "y-protocols": "^1.0.6",
     "yjs": "^13.6.33"
   },
